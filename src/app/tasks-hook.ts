@@ -9,7 +9,6 @@ const currentMonth = now.getMonth();
 const currentYear = now.getFullYear();
 
 const INITIAL_TASKS: Task[] = [
-  { id: "init-1", title: "Immovable Task", description: "Cannot be moved", day: 4, month: currentMonth, year: currentYear, mutable: false },
   { id: "init-2", title: "Mutable Task 1", description: "Can be moved", day: 4, month: currentMonth, year: currentYear, mutable: true },
   { id: "init-3", title: "Mutable Task 2", description: "Can be moved", day: 4, month: currentMonth, year: currentYear, mutable: true },
   { id: "init-4", title: "Mutable Task 3", description: "Can be moved", day: 4, month: currentMonth, year: currentYear, mutable: true },
@@ -20,9 +19,9 @@ const INITIAL_TASKS: Task[] = [
 ];
 
 // Fetch Ukraine public holidays for 2026 and create immutable tasks
-const fetchHolidayTasks = async (): Promise<Task[]> => {
+const fetchHolidayTasks = async (year: number): Promise<Task[]> => {
   try {
-    const response = await fetch("https://date.nager.at/api/v3/PublicHolidays/2026/ua");
+    const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/ua`);
     if (!response.ok) {
       console.error("Failed to fetch holidays:", response.status);
       return [];
@@ -48,7 +47,24 @@ const fetchHolidayTasks = async (): Promise<Task[]> => {
 
 export const useTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [lastVisitedYear, setLastVisitedYear] = useState<number>(() => currentYear);
   const isInitialized = useRef(false);
+
+  // Fetch holidays for a given year and replace immutable tasks
+  const changeYear = useCallback(async (year: number) => {
+    if (year === lastVisitedYear) return;
+    
+    const holidayTasks = await fetchHolidayTasks(year);
+    
+    setTasks((prev) => {
+      // Remove immutable tasks (holidays from previous year)
+      const mutableTasks = prev.filter((task) => task.mutable !== false);
+      // Add new holiday tasks for the new year
+      return [...holidayTasks, ...mutableTasks];
+    });
+    
+    setLastVisitedYear(year);
+  }, [lastVisitedYear]);
 
   // Fetch holidays on mount and initialize tasks
   useEffect(() => {
@@ -56,7 +72,7 @@ export const useTasks = () => {
     isInitialized.current = true;
 
     const initTasks = async () => {
-      const holidayTasks = await fetchHolidayTasks();
+      const holidayTasks = await fetchHolidayTasks(currentYear);
       // Combine holiday tasks (immutable) with initial tasks
       setTasks([...holidayTasks, ...INITIAL_TASKS]);
     };
@@ -114,6 +130,8 @@ export const useTasks = () => {
 
   return {
     tasks,
+    lastVisitedYear,
+    changeYear,
     addTask,
     updateTask,
     deleteTask,

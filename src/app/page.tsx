@@ -17,7 +17,7 @@ type AddingTask = {
 } | null;
 
 export default function Home() {
-  const { tasks, addTask, updateTask, deleteTask, moveTask, reorderTasks } = useTasks();
+  const { tasks, lastVisitedYear, changeYear, addTask, updateTask, deleteTask, moveTask, reorderTasks } = useTasks();
   const [filterText, setFilterText] = useState("");
   const filteredTasks = useMemo(() =>
     filterText
@@ -27,6 +27,13 @@ export default function Home() {
   );
   const { weekDays, monthLabel, cells, currentMonth, currentYear, goToPreviousMonth, goToNextMonth } =
     useCalendarLayout(filteredTasks);
+
+  // Fetch holidays when year changes
+  useEffect(() => {
+    if (currentYear !== lastVisitedYear) {
+      changeYear(currentYear);
+    }
+  }, [currentYear, lastVisitedYear, changeYear]);
   
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [editingTask, setEditingTask] = useState<EditingTask>(null);
