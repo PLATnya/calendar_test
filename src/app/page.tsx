@@ -25,7 +25,7 @@ export default function Home() {
       : tasks,
     [tasks, filterText]
   );
-  const { weekDays, monthLabel, cells, goToPreviousMonth, goToNextMonth } =
+  const { weekDays, monthLabel, cells, currentMonth, currentYear, goToPreviousMonth, goToNextMonth } =
     useCalendarLayout(filteredTasks);
   
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
@@ -80,7 +80,7 @@ export default function Home() {
 
   const handleSaveNewTask = () => {
     if (addingTask && (newTaskTitle.trim() || newTaskDescription.trim())) {
-      addTask(addingTask.day, newTaskTitle, newTaskDescription);
+      addTask(addingTask.day, currentMonth, currentYear, newTaskTitle, newTaskDescription);
     }
     setAddingTask(null);
     setNewTaskTitle("");
@@ -179,7 +179,7 @@ export default function Home() {
       }
     } else if (draggedTask.day !== targetDay) {
       // Moving to a different day
-      moveTask(draggedTask.id, targetDay);
+      moveTask(draggedTask.id, targetDay, currentMonth, currentYear);
     }
     setDraggedTask(null);
   };

@@ -13,10 +13,14 @@ export const useCalendarLayout = (tasks: Task[] = []) => {
     const month = currentMonth.getMonth();
     const baseLayout = getCalendarLayout(year, month);
     
-    // Map tasks to cells
+    // Map tasks to cells - filter by month and year in addition to day
     const cells = baseLayout.cells.map((cell) => {
       if (cell.type === "day") {
-        const dayTasks = tasks.filter((task) => task.day === cell.day);
+        const dayTasks = tasks.filter((task) => 
+          task.day === cell.day && 
+          task.month === month && 
+          task.year === year
+        );
         // Sort: non-mutable tasks first, then mutable tasks
         dayTasks.sort((a, b) => {
           const aMutable = a.mutable ?? true;
@@ -55,6 +59,8 @@ export const useCalendarLayout = (tasks: Task[] = []) => {
     weekDays: monthData.weekDays,
     monthLabel: monthData.monthLabel,
     cells: monthData.cells as CalendarCell[],
+    currentMonth: currentMonth.getMonth(),
+    currentYear: currentMonth.getFullYear(),
     goToPreviousMonth,
     goToNextMonth,
   };

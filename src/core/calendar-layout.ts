@@ -5,6 +5,8 @@ export type Task = {
   title: string;
   description: string;
   day: number;
+  month: number;
+  year: number;
   mutable?: boolean;
 };
 
