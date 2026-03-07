@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { Task } from "@/core/calendar-layout";
 
 const generateId = () => crypto.randomUUID();
@@ -19,8 +19,49 @@ const INITIAL_TASKS: Task[] = [
   { id: "init-8", title: "Mutable Task 7", description: "Can be moved", day: 4, month: currentMonth, year: currentYear, mutable: true },
 ];
 
+// Fetch Ukraine public holidays for 2026 and create immutable tasks
+const fetchHolidayTasks = async (): Promise<Task[]> => {
+  try {
+    const response = await fetch("https://date.nager.at/api/v3/PublicHolidays/2026/ua");
+    if (!response.ok) {
+      console.error("Failed to fetch holidays:", response.status);
+      return [];
+    }
+    const holidays = await response.json();
+    return holidays.map((holiday: { date: string; localName: string; name: string }) => {
+      const [year, month, day] = holiday.date.split("-").map(Number);
+      return {
+        id: `holiday-${holiday.date}`,
+        title: holiday.localName,
+        description: holiday.name,
+        day,
+        month: month - 1, // Convert to 0-based month
+        year,
+        mutable: false,
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching holidays:", error);
+    return [];
+  }
+};
+
 export const useTasks = () => {
-  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const isInitialized = useRef(false);
+
+  // Fetch holidays on mount and initialize tasks
+  useEffect(() => {
+    if (isInitialized.current) return;
+    isInitialized.current = true;
+
+    const initTasks = async () => {
+      const holidayTasks = await fetchHolidayTasks();
+      // Combine holiday tasks (immutable) with initial tasks
+      setTasks([...holidayTasks, ...INITIAL_TASKS]);
+    };
+    initTasks();
+  }, []);
 
   const addTask = useCallback((day: number, month: number, year: number, title: string, description: string) => {
     const newTask: Task = {
