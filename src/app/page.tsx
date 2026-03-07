@@ -1,6 +1,6 @@
 "use client";
 
-import { useCalendarLayout } from "./coreUI/calendar-layout";
+import { useCalendarLayout } from "./calendar-layout-hook";
 
 export default function Home() {
   const { weekDays, monthLabel, cells, goToPreviousMonth, goToNextMonth } =
