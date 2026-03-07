@@ -252,7 +252,7 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="grid flex-1 auto-rows-fr grid-cols-7 gap-1 sm:gap-1">
+          <div className="grid flex-1 auto-rows-fr grid-cols-7 gap-1 sm:gap-1 max-h-250">
             {cells.map((cell) =>
               cell.type === "empty" ? (
                 <div
@@ -289,8 +289,8 @@ export default function Home() {
                   </button>
                   
                   {/* Tasks list */}
-                  <div className="h-27 flex flex-col">
-                    <div className="overflow-y-scroll min-h-0 flex-1 space-y-1 bg-green-50">
+                  <div className="flex flex-1 flex-col min-h-0">
+                    <div className="overflow-y-auto min-h-0 flex-1 space-y-1 bg-green-50">
                     {cell.tasks.map((task, index) => {
                       const isMutable = task.mutable ?? true;
                       return (
