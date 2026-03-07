@@ -240,7 +240,8 @@ export default function Home() {
                   </button>
                   
                   {/* Tasks list */}
-                  <div className="mt-1 flex flex-col gap-1 overflow-y-auto max-h-24">
+                  <div className="h-20 flex flex-col">
+                    <div className="overflow-y-scroll min-h-0 flex-1 space-y-2">
                     {cell.tasks.map((task) => (
                       <div
                         key={task.id}
@@ -252,7 +253,7 @@ export default function Home() {
                         onDragStart={(e) => handleDragStart(e, task)}
                         onDragEnd={handleDragEnd}
                         onClick={() => handleStartEditTask(task, cell.day)}
-                        className={`cursor-grab rounded bg-zinc-100 px-1.5 py-0.5 text-xs truncate hover:bg-zinc-200 active:cursor-grabbing ${
+                        className={`overflow-y-auto min-h-0 flex-1 cursor-grab rounded bg-zinc-100 px-1.5 py-0.5 text-xs truncate hover:bg-zinc-200 active:cursor-grabbing ${
                           draggedTask?.id === task.id ? "opacity-50" : ""
                         } ${editingTask?.task.id === task.id ? "invisible" : ""}`}
                         title={`${task.title}${task.description ? `\n${task.description}` : ""}`}
@@ -260,6 +261,7 @@ export default function Home() {
                         {task.title}
                       </div>
                     ))}
+                    </div>
                   </div>
 
                   {/* Edit overlay - positioned at task location */}
