@@ -276,27 +276,34 @@ export default function Home() {
                   {/* Tasks list */}
                   <div className="h-20 flex flex-col">
                     <div className="overflow-y-scroll min-h-0 flex-1 space-y-2">
-                    {cell.tasks.map((task, index) => (
+                    {cell.tasks.map((task, index) => {
+                      const isMutable = task.mutable ?? true;
+                      return (
                       <div
                         key={task.id}
                         ref={(el) => {
                           if (el) taskRefs.current.set(task.id, el);
                           else taskRefs.current.delete(task.id);
                         }}
-                        draggable
+                        draggable={isMutable}
                         onDragStart={(e) => handleDragStart(e, task)}
                         onDragEnd={handleDragEnd}
                         onDragOver={(e) => handleDragOverTask(e, cell.day, index)}
                         onDrop={(e) => handleDrop(e, cell.day, index)}
                         onClick={() => handleStartEditTask(task, cell.day)}
-                        className={`cursor-grab rounded bg-zinc-100 px-1.5 py-0.5 text-xs truncate hover:bg-zinc-200 active:cursor-grabbing ${
+                        className={`rounded px-1.5 py-0.5 text-xs truncate ${
+                          !isMutable 
+                            ? "bg-orange-200 cursor-default hover:bg-orange-300" 
+                            : "bg-zinc-100 cursor-grab hover:bg-zinc-200 active:cursor-grabbing"
+                        } ${
                           draggedTask?.id === task.id ? "opacity-50" : ""
                         } ${editingTask?.task.id === task.id ? "invisible" : ""}`}
                         title={`${task.title}${task.description ? `\n${task.description}` : ""}`}
                       >
                         {task.title}
                       </div>
-                    ))}
+                      );
+                    })}
                     </div>
                   </div>
 

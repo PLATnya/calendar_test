@@ -5,6 +5,7 @@ export type Task = {
   title: string;
   description: string;
   day: number;
+  mutable?: boolean;
 };
 
 export type CalendarCell =

@@ -16,9 +16,18 @@ export const useCalendarLayout = (tasks: Task[] = []) => {
     // Map tasks to cells
     const cells = baseLayout.cells.map((cell) => {
       if (cell.type === "day") {
+        const dayTasks = tasks.filter((task) => task.day === cell.day);
+        // Sort: non-mutable tasks first, then mutable tasks
+        dayTasks.sort((a, b) => {
+          const aMutable = a.mutable ?? true;
+          const bMutable = b.mutable ?? true;
+          if (!aMutable && bMutable) return -1;
+          if (aMutable && !bMutable) return 1;
+          return 0;
+        });
         return {
           ...cell,
-          tasks: tasks.filter((task) => task.day === cell.day),
+          tasks: dayTasks,
         };
       }
       return cell;

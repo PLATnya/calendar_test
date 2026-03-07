@@ -3,8 +3,12 @@ import type { Task } from "@/core/calendar-layout";
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
+const INITIAL_TASKS: Task[] = [
+  { id: "init-1", title: "Immovable Task", description: "Cannot be moved", day: 4, mutable: false },
+];
+
 export const useTasks = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
 
   const addTask = useCallback((day: number, title: string, description: string) => {
     const newTask: Task = {
