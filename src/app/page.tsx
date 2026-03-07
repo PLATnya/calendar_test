@@ -1,22 +1,169 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useCalendarLayout } from "./calendar-layout-hook";
+import { useTasks } from "./tasks-hook";
+import type { Task } from "@/core/calendar-layout";
+
+type EditingTask = {
+  task: Task;
+  day: number;
+  position: { top: number; left: number; width: number };
+} | null;
+
+type AddingTask = {
+  day: number;
+  position: { top: number; left: number; width: number };
+} | null;
 
 export default function Home() {
+  const { tasks, addTask, updateTask, deleteTask, moveTask } = useTasks();
   const { weekDays, monthLabel, cells, goToPreviousMonth, goToNextMonth } =
-    useCalendarLayout();
+    useCalendarLayout(tasks);
+  
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [editingTask, setEditingTask] = useState<EditingTask>(null);
+  const [addingTask, setAddingTask] = useState<AddingTask>(null);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskDescription, setNewTaskDescription] = useState("");
+  const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+  const [dragOverDay, setDragOverDay] = useState<number | null>(null);
+  
+  const taskRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const addButtonRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
 
   const handleGoToPreviousMonth = () => {
     setSelectedDay(null);
+    setEditingTask(null);
+    setAddingTask(null);
     goToPreviousMonth();
   };
 
   const handleGoToNextMonth = () => {
     setSelectedDay(null);
+    setEditingTask(null);
+    setAddingTask(null);
     goToNextMonth();
   };
+
+  const handleStartAddTask = (day: number) => {
+    const addButton = addButtonRefs.current.get(day);
+    if (addButton) {
+      const rect = addButton.getBoundingClientRect();
+      const parentRect = addButton.offsetParent?.getBoundingClientRect();
+      if (parentRect) {
+        setAddingTask({
+          day,
+          position: {
+            top: rect.top - parentRect.top,
+            left: rect.left - parentRect.left,
+            width: rect.width,
+          },
+        });
+      }
+    }
+    setNewTaskTitle("");
+    setNewTaskDescription("");
+  };
+
+  const handleSaveNewTask = () => {
+    if (addingTask && (newTaskTitle.trim() || newTaskDescription.trim())) {
+      addTask(addingTask.day, newTaskTitle, newTaskDescription);
+    }
+    setAddingTask(null);
+    setNewTaskTitle("");
+    setNewTaskDescription("");
+  };
+
+  const handleCancelAddTask = () => {
+    setAddingTask(null);
+    setNewTaskTitle("");
+    setNewTaskDescription("");
+  };
+
+  const handleStartEditTask = (task: Task, day: number) => {
+    const taskElement = taskRefs.current.get(task.id);
+    if (taskElement) {
+      const rect = taskElement.getBoundingClientRect();
+      const parentRect = taskElement.offsetParent?.getBoundingClientRect();
+      if (parentRect) {
+        setEditingTask({
+          task,
+          day,
+          position: {
+            top: rect.top - parentRect.top,
+            left: rect.left - parentRect.left,
+            width: rect.width,
+          },
+        });
+      }
+    }
+  };
+
+  const handleSaveEditTask = () => {
+    if (editingTask) {
+      updateTask(editingTask.task.id, editingTask.task.title, editingTask.task.description);
+      setEditingTask(null);
+    }
+  };
+
+  const handleCancelEditTask = () => {
+    setEditingTask(null);
+  };
+
+  const handleDeleteTask = () => {
+    if (editingTask) {
+      deleteTask(editingTask.task.id);
+      setEditingTask(null);
+    }
+  };
+
+  // Drag and Drop handlers
+  const handleDragStart = (e: React.DragEvent, task: Task) => {
+    setDraggedTask(task);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", task.id);
+  };
+
+  const handleDragOver = (e: React.DragEvent, day: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverDay(day);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverDay(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetDay: number) => {
+    e.preventDefault();
+    setDragOverDay(null);
+    
+    if (draggedTask && draggedTask.day !== targetDay) {
+      moveTask(draggedTask.id, targetDay);
+    }
+    setDraggedTask(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedTask(null);
+    setDragOverDay(null);
+  };
+
+  // Close overlays when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Element;
+      if (editingTask && !target.closest('.task-edit-overlay')) {
+        setEditingTask(null);
+      }
+      if (addingTask && !target.closest('.task-add-overlay')) {
+        setAddingTask(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [editingTask, addingTask]);
 
   return (
     <div className="min-h-screen bg-linear-to-b from-amber-50 via-white to-sky-100 p-3 sm:p-4">
@@ -65,26 +212,178 @@ export default function Home() {
                   aria-hidden="true"
                 />
               ) : (
-                <button
-                  type="button"
+                <div
                   key={cell.key}
-                  onClick={() => setSelectedDay(cell.day)}
-                  className={`flex items-start justify-end rounded-xl border p-2 text-sm font-medium transition sm:p-3 sm:text-base ${
+                  onDragOver={(e) => handleDragOver(e, cell.day)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, cell.day)}
+                  className={`relative flex flex-col rounded-xl border p-2 text-sm font-medium transition sm:p-3 sm:text-base ${
                     cell.isToday
                       ? "border-orange-400 bg-orange-100 text-orange-900"
                       : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
+                  } ${
+                    dragOverDay === cell.day
+                      ? "border-sky-400 bg-sky-100 ring-2 ring-sky-300"
+                      : ""
                   } ${
                     selectedDay === cell.day
                       ? "ring-2 ring-sky-300 ring-offset-1"
                       : ""
                   }`}
                 >
-                  {cell.day}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDay(cell.day)}
+                    className="flex w-full items-start justify-end text-left"
+                  >
+                    {cell.day}
+                  </button>
+                  
+                  {/* Tasks list */}
+                  <div className="mt-1 flex flex-col gap-1 overflow-y-auto max-h-24">
+                    {cell.tasks.map((task) => (
+                      <div
+                        key={task.id}
+                        ref={(el) => {
+                          if (el) taskRefs.current.set(task.id, el);
+                          else taskRefs.current.delete(task.id);
+                        }}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, task)}
+                        onDragEnd={handleDragEnd}
+                        onClick={() => handleStartEditTask(task, cell.day)}
+                        className={`cursor-grab rounded bg-zinc-100 px-1.5 py-0.5 text-xs truncate hover:bg-zinc-200 active:cursor-grabbing ${
+                          draggedTask?.id === task.id ? "opacity-50" : ""
+                        } ${editingTask?.task.id === task.id ? "invisible" : ""}`}
+                        title={`${task.title}${task.description ? `\n${task.description}` : ""}`}
+                      >
+                        {task.title}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Edit overlay - positioned at task location */}
+                  {editingTask?.day === cell.day && (
+                    <div
+                      className="task-edit-overlay absolute z-30"
+                      style={{
+                        top: editingTask.position.top,
+                        left: editingTask.position.left,
+                        width: editingTask.position.width,
+                      }}
+                    >
+                      <div className="rounded-lg border border-sky-300 bg-sky-50 p-2 shadow-lg">
+                        <input
+                          type="text"
+                          value={editingTask.task.title}
+                          onChange={(e) =>
+                            setEditingTask({
+                              ...editingTask,
+                              task: { ...editingTask.task, title: e.target.value },
+                            })
+                          }
+                          className="mb-1 w-full rounded border border-sky-300 px-1 py-0.5 text-xs"
+                          placeholder="Task title"
+                          autoFocus
+                        />
+                        <textarea
+                          value={editingTask.task.description}
+                          onChange={(e) =>
+                            setEditingTask({
+                              ...editingTask,
+                              task: { ...editingTask.task, description: e.target.value },
+                            })
+                          }
+                          className="mb-1 w-full resize-none rounded border border-sky-300 px-1 py-0.5 text-xs"
+                          placeholder="Description (optional)"
+                          rows={2}
+                        />
+                        <div className="flex gap-1">
+                          <button
+                            onClick={handleSaveEditTask}
+                            className="rounded bg-sky-500 px-1 py-0.5 text-xs text-white hover:bg-sky-600"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={handleCancelEditTask}
+                            className="rounded bg-zinc-300 px-1 py-0.5 text-xs text-zinc-700 hover:bg-zinc-400"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleDeleteTask}
+                            className="ml-auto rounded bg-red-400 px-1 py-0.5 text-xs text-white hover:bg-red-500"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Add task button */}
+                  <div className="mt-auto pt-1">
+                    <button
+                      ref={(el) => {
+                        if (el) addButtonRefs.current.set(cell.day, el);
+                        else addButtonRefs.current.delete(cell.day);
+                      }}
+                      type="button"
+                      onClick={() => handleStartAddTask(cell.day)}
+                      className="w-full rounded border border-solid border-zinc-300 py-0.5 text-xs text-zinc-400 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-600"
+                    >
+                      + Add task
+                    </button>
+                  </div>
+
+                  {/* Add task overlay */}
+                  {addingTask?.day === cell.day && (
+                    <div
+                      className="task-add-overlay absolute z-30"
+                      style={{
+                        top: addingTask.position.top,
+                        left: addingTask.position.left,
+                        width: addingTask.position.width,
+                      }}
+                    >
+                      <div className="rounded-lg border border-sky-300 bg-sky-50 p-2 shadow-lg">
+                        <input
+                          type="text"
+                          value={newTaskTitle}
+                          onChange={(e) => setNewTaskTitle(e.target.value)}
+                          className="mb-1 w-full rounded border border-sky-300 px-1 py-0.5 text-xs"
+                          placeholder="Task title"
+                          autoFocus
+                        />
+                        <textarea
+                          value={newTaskDescription}
+                          onChange={(e) => setNewTaskDescription(e.target.value)}
+                          className="mb-1 w-full resize-none rounded border border-sky-300 px-1 py-0.5 text-xs"
+                          placeholder="Description (optional)"
+                          rows={2}
+                        />
+                        <div className="flex gap-1">
+                          <button
+                            onClick={handleSaveNewTask}
+                            className="rounded bg-sky-500 px-1 py-0.5 text-xs text-white hover:bg-sky-600"
+                          >
+                            Add
+                          </button>
+                          <button
+                            onClick={handleCancelAddTask}
+                            className="rounded bg-zinc-300 px-1 py-0.5 text-xs text-zinc-700 hover:bg-zinc-400"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               ),
             )}
           </div>
-
         </div>
 
         {selectedDay !== null ? (
@@ -93,7 +392,7 @@ export default function Home() {
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold text-zinc-900 sm:text-xl">
-                    {selectedDay} {monthLabel} 
+                    {selectedDay} {monthLabel}
                   </h2>
                 </div>
                 <button

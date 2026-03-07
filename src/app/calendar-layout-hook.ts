@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
-import { getCalendarLayout, type CalendarCell } from "@/core/calendar-layout";
+import { getCalendarLayout, type CalendarCell, type Task } from "@/core/calendar-layout";
 
-export type { CalendarCell };
+export type { CalendarCell, Task };
 
-export const useCalendarLayout = () => {
+export const useCalendarLayout = (tasks: Task[] = []) => {
   const [currentMonth, setCurrentMonth] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   );
@@ -11,8 +11,24 @@ export const useCalendarLayout = () => {
   const monthData = useMemo(() => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
-    return getCalendarLayout(year, month);
-  }, [currentMonth]);
+    const baseLayout = getCalendarLayout(year, month);
+    
+    // Map tasks to cells
+    const cells = baseLayout.cells.map((cell) => {
+      if (cell.type === "day") {
+        return {
+          ...cell,
+          tasks: tasks.filter((task) => task.day === cell.day),
+        };
+      }
+      return cell;
+    });
+    
+    return {
+      ...baseLayout,
+      cells,
+    };
+  }, [currentMonth, tasks]);
 
   const goToPreviousMonth = () => {
     setCurrentMonth(

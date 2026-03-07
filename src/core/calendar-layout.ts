@@ -1,5 +1,12 @@
 export const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+export type Task = {
+  id: string;
+  title: string;
+  description: string;
+  day: number;
+};
+
 export type CalendarCell =
   | {
       type: "empty";
@@ -10,6 +17,7 @@ export type CalendarCell =
       key: string;
       day: number;
       isToday: boolean;
+      tasks: Task[];
     };
 
 export type CalendarLayout = {
@@ -50,6 +58,7 @@ export const getCalendarLayout = (
       key: `day-${day}`,
       day,
       isToday,
+      tasks: [],
     };
   });
 
