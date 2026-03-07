@@ -18,8 +18,12 @@ type AddingTask = {
 
 export default function Home() {
   const { tasks, addTask, updateTask, deleteTask, moveTask, reorderTasks } = useTasks();
+  const [filterText, setFilterText] = useState("");
+  const filteredTasks = filterText
+    ? tasks.filter((task) => task.title.toLowerCase().includes(filterText.toLowerCase()))
+    : tasks;
   const { weekDays, monthLabel, cells, goToPreviousMonth, goToNextMonth } =
-    useCalendarLayout(tasks);
+    useCalendarLayout(filteredTasks);
   
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [editingTask, setEditingTask] = useState<EditingTask>(null);
@@ -190,9 +194,18 @@ export default function Home() {
     <div className="min-h-screen bg-linear-to-b from-amber-50 via-white to-sky-100 p-3 sm:p-4">
       <main className="relative mx-auto flex h-[calc(100vh-1.5rem)] w-full flex-col rounded-3xl border border-zinc-200/80 bg-white/90 p-4 shadow-xl shadow-zinc-300/20 backdrop-blur sm:h-[calc(100vh-2rem)] sm:p-6">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
-            {monthLabel}
-          </h1>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+              {monthLabel}
+            </h1>
+            <input
+              type="text"
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              placeholder="Filter tasks..."
+              className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 placeholder-zinc-400 focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-400"
+            />
+          </div>
 
           <div className="flex items-center gap-2">
             <button
