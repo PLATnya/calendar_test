@@ -64,7 +64,7 @@ export default function Home() {
       setAddingTask({
         day,
         position: {
-          top: rect.top - parentRect.top,
+          top: e.clientY - parentRect.top,
           left: rect.left - parentRect.left,
           width: rect.width,
         },
