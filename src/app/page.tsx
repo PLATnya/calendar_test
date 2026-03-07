@@ -38,41 +38,38 @@ export default function Home() {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   
   const taskRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const addButtonRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
 
-  const handleGoToPreviousMonth = () => {
+
+  const closeAll = () =>{
     taskRefs.current.clear();
-    addButtonRefs.current.clear();
     setSelectedDay(null);
     setEditingTask(null);
     setAddingTask(null);
+  }
+  const handleGoToPreviousMonth = () => {
+    closeAll();
     goToPreviousMonth();
   };
 
   const handleGoToNextMonth = () => {
-    taskRefs.current.clear();
-    addButtonRefs.current.clear();
-    setSelectedDay(null);
-    setEditingTask(null);
-    setAddingTask(null);
+    closeAll();
     goToNextMonth();
   };
 
-  const handleStartAddTask = (day: number) => {
-    const addButton = addButtonRefs.current.get(day);
-    if (addButton) {
-      const rect = addButton.getBoundingClientRect();
-      const parentRect = addButton.offsetParent?.getBoundingClientRect();
-      if (parentRect) {
-        setAddingTask({
-          day,
-          position: {
-            top: rect.top - parentRect.top,
-            left: rect.left - parentRect.left,
-            width: rect.width,
-          },
-        });
-      }
+  const handleStartAddTask = (day: number, e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    const parentRect = target.offsetParent?.getBoundingClientRect();
+    if (parentRect) {
+      setAddingTask({
+        day,
+        position: {
+          top: rect.top - parentRect.top,
+          left: rect.left - parentRect.left,
+          width: rect.width,
+        },
+      });
+      //}
     }
     setNewTaskTitle("");
     setNewTaskDescription("");
@@ -282,14 +279,21 @@ export default function Home() {
                 >
                   <button
                     type="button"
-                    onClick={() => setSelectedDay(cell.day)}
+                    onClick={(e) => {
+                      if (e.target !== e.currentTarget) return;
+                      handleStartAddTask(cell.day, e);
+                    }}
                     className="flex w-full items-start justify-end text-left"
                   >
                     {cell.day}
                   </button>
                   
                   {/* Tasks list */}
-                  <div className="flex flex-1 flex-col min-h-0">
+                  <div 
+                    onClick={(e) => {
+                      handleStartAddTask(cell.day, e);
+                    }}
+                  className="flex flex-1 flex-col min-h-0">
                     <div className="overflow-y-auto min-h-0 flex-1 space-y-1 bg-green-50">
                     {cell.tasks.map((task, index) => {
                       const isMutable = task.mutable ?? true;
@@ -382,23 +386,8 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* Add task button */}
-                  <div className="mt-auto">
-                    <button
-                      ref={(el) => {
-                        if (el) addButtonRefs.current.set(cell.day, el);
-                        else addButtonRefs.current.delete(cell.day);
-                      }}
-                      type="button"
-                      onClick={() => handleStartAddTask(cell.day)}
-                      className="w-full rounded border border-solid border-zinc-300 py-0.5 text-xs text-zinc-400 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-600"
-                    >
-                      + Add task
-                    </button>
-                  </div>
-
                   {/* Add task overlay */}
-                  {addingTask?.day === cell.day && (
+                  {!editingTask && addingTask?.day === cell.day && (
                     <div
                       className="task-add-overlay absolute z-30"
                       style={{
