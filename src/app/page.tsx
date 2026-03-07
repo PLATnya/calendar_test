@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useCalendarLayout } from "./calendar-layout-hook";
 import { useTasks } from "./tasks-hook";
 import type { Task } from "@/core/calendar-layout";
@@ -19,9 +19,12 @@ type AddingTask = {
 export default function Home() {
   const { tasks, addTask, updateTask, deleteTask, moveTask, reorderTasks } = useTasks();
   const [filterText, setFilterText] = useState("");
-  const filteredTasks = filterText
-    ? tasks.filter((task) => task.title.toLowerCase().includes(filterText.toLowerCase()))
-    : tasks;
+  const filteredTasks = useMemo(() =>
+    filterText
+      ? tasks.filter((task) => task.title.toLowerCase().includes(filterText.toLowerCase()))
+      : tasks,
+    [tasks, filterText]
+  );
   const { weekDays, monthLabel, cells, goToPreviousMonth, goToNextMonth } =
     useCalendarLayout(filteredTasks);
   
@@ -38,6 +41,8 @@ export default function Home() {
   const addButtonRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
 
   const handleGoToPreviousMonth = () => {
+    taskRefs.current.clear();
+    addButtonRefs.current.clear();
     setSelectedDay(null);
     setEditingTask(null);
     setAddingTask(null);
@@ -45,6 +50,8 @@ export default function Home() {
   };
 
   const handleGoToNextMonth = () => {
+    taskRefs.current.clear();
+    addButtonRefs.current.clear();
     setSelectedDay(null);
     setEditingTask(null);
     setAddingTask(null);
@@ -107,7 +114,15 @@ export default function Home() {
 
   const handleSaveEditTask = () => {
     if (editingTask) {
-      updateTask(editingTask.task.id, editingTask.task.title, editingTask.task.description);
+      // Only update if there are actual changes
+      const originalTask = tasks.find(t => t.id === editingTask.task.id);
+      const hasChanges = !originalTask || 
+        originalTask.title !== editingTask.task.title || 
+        originalTask.description !== editingTask.task.description;
+      
+      if (hasChanges) {
+        updateTask(editingTask.task.id, editingTask.task.title, editingTask.task.description);
+      }
       setEditingTask(null);
     }
   };
@@ -153,18 +168,18 @@ export default function Home() {
     setDragOverDay(null);
     setDragOverIndex(null);
     
-    if (draggedTask) {
-      // If dropping on a specific task index, reorder within the same cell
-      if (targetIndex !== undefined && draggedTask.day === targetDay) {
-        const currentTasks = tasks.filter(t => t.day === targetDay);
-        const currentIndex = currentTasks.findIndex(t => t.id === draggedTask.id);
-        if (currentIndex !== -1 && currentIndex !== targetIndex) {
-          reorderTasks(targetDay, currentIndex, targetIndex);
-        }
-      } else if (draggedTask.day !== targetDay) {
-        // Moving to a different day
-        moveTask(draggedTask.id, targetDay);
+    if (!draggedTask) return;
+    
+    // Determine if this is a reorder (same day) or move (different day)
+    if (draggedTask.day === targetDay && targetIndex !== undefined) {
+      const currentTasks = tasks.filter(t => t.day === targetDay);
+      const currentIndex = currentTasks.findIndex(t => t.id === draggedTask.id);
+      if (currentIndex !== -1 && currentIndex !== targetIndex) {
+        reorderTasks(targetDay, currentIndex, targetIndex);
       }
+    } else if (draggedTask.day !== targetDay) {
+      // Moving to a different day
+      moveTask(draggedTask.id, targetDay);
     }
     setDraggedTask(null);
   };
@@ -237,7 +252,7 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="grid flex-1 auto-rows-fr grid-cols-7 gap-2 sm:gap-3">
+          <div className="grid flex-1 auto-rows-fr grid-cols-7 gap-1 sm:gap-1">
             {cells.map((cell) =>
               cell.type === "empty" ? (
                 <div
@@ -251,7 +266,7 @@ export default function Home() {
                   onDragOver={(e) => handleDragOver(e, cell.day)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, cell.day)}
-                  className={`relative flex flex-col rounded-xl border p-2 text-sm font-medium transition sm:p-3 sm:text-base ${
+                  className={`relative flex flex-col rounded-xl border p-2 text-sm font-medium transition sm:p-2 sm:text-base ${
                     cell.isToday
                       ? "border-orange-400 bg-orange-100 text-orange-900"
                       : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
@@ -274,8 +289,8 @@ export default function Home() {
                   </button>
                   
                   {/* Tasks list */}
-                  <div className="h-20 flex flex-col">
-                    <div className="overflow-y-scroll min-h-0 flex-1 space-y-2">
+                  <div className="h-27 flex flex-col">
+                    <div className="overflow-y-scroll min-h-0 flex-1 space-y-1 bg-green-50">
                     {cell.tasks.map((task, index) => {
                       const isMutable = task.mutable ?? true;
                       return (
@@ -368,7 +383,7 @@ export default function Home() {
                   )}
 
                   {/* Add task button */}
-                  <div className="mt-auto pt-1">
+                  <div className="mt-auto">
                     <button
                       ref={(el) => {
                         if (el) addButtonRefs.current.set(cell.day, el);

@@ -1,10 +1,17 @@
 import { useState, useCallback } from "react";
 import type { Task } from "@/core/calendar-layout";
 
-const generateId = () => Math.random().toString(36).substring(2, 9);
+const generateId = () => crypto.randomUUID();
 
 const INITIAL_TASKS: Task[] = [
   { id: "init-1", title: "Immovable Task", description: "Cannot be moved", day: 4, mutable: false },
+  { id: "init-2", title: "Mutable Task 1", description: "Can be moved", day: 4, mutable: true },
+  { id: "init-3", title: "Mutable Task 2", description: "Can be moved", day: 4, mutable: true },
+  { id: "init-4", title: "Mutable Task 3", description: "Can be moved", day: 4, mutable: true },
+  { id: "init-5", title: "Mutable Task 4", description: "Can be moved", day: 4, mutable: true },
+  { id: "init-6", title: "Mutable Task 5", description: "Can be moved", day: 4, mutable: true },
+  { id: "init-7", title: "Mutable Task 6", description: "Can be moved", day: 4, mutable: true },
+  { id: "init-8", title: "Mutable Task 7", description: "Can be moved", day: 4, mutable: true },
 ];
 
 export const useTasks = () => {
