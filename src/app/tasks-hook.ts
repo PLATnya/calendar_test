@@ -37,6 +37,17 @@ export const useTasks = () => {
     );
   }, []);
 
+  const reorderTasks = useCallback((day: number, fromIndex: number, toIndex: number) => {
+    setTasks((prev) => {
+      const dayTasks = prev.filter((task) => task.day === day);
+      const otherTasks = prev.filter((task) => task.day !== day);
+      const reorderedDayTasks = [...dayTasks];
+      const [movedTask] = reorderedDayTasks.splice(fromIndex, 1);
+      reorderedDayTasks.splice(toIndex, 0, movedTask);
+      return [...otherTasks, ...reorderedDayTasks];
+    });
+  }, []);
+
   const getTasksForDay = useCallback(
     (day: number) => tasks.filter((task) => task.day === day),
     [tasks]
@@ -48,6 +59,7 @@ export const useTasks = () => {
     updateTask,
     deleteTask,
     moveTask,
+    reorderTasks,
     getTasksForDay,
   };
 };

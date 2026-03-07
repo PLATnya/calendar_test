@@ -17,7 +17,7 @@ type AddingTask = {
 } | null;
 
 export default function Home() {
-  const { tasks, addTask, updateTask, deleteTask, moveTask } = useTasks();
+  const { tasks, addTask, updateTask, deleteTask, moveTask, reorderTasks } = useTasks();
   const { weekDays, monthLabel, cells, goToPreviousMonth, goToNextMonth } =
     useCalendarLayout(tasks);
   
@@ -28,6 +28,7 @@ export default function Home() {
   const [newTaskDescription, setNewTaskDescription] = useState("");
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [dragOverDay, setDragOverDay] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   
   const taskRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const addButtonRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
@@ -125,6 +126,14 @@ export default function Home() {
     e.dataTransfer.setData("text/plain", task.id);
   };
 
+  const handleDragOverTask = (e: React.DragEvent, day: number, index: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverDay(day);
+    setDragOverIndex(index);
+  };
+
   const handleDragOver = (e: React.DragEvent, day: number) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
@@ -135,12 +144,23 @@ export default function Home() {
     setDragOverDay(null);
   };
 
-  const handleDrop = (e: React.DragEvent, targetDay: number) => {
+  const handleDrop = (e: React.DragEvent, targetDay: number, targetIndex?: number) => {
     e.preventDefault();
     setDragOverDay(null);
+    setDragOverIndex(null);
     
-    if (draggedTask && draggedTask.day !== targetDay) {
-      moveTask(draggedTask.id, targetDay);
+    if (draggedTask) {
+      // If dropping on a specific task index, reorder within the same cell
+      if (targetIndex !== undefined && draggedTask.day === targetDay) {
+        const currentTasks = tasks.filter(t => t.day === targetDay);
+        const currentIndex = currentTasks.findIndex(t => t.id === draggedTask.id);
+        if (currentIndex !== -1 && currentIndex !== targetIndex) {
+          reorderTasks(targetDay, currentIndex, targetIndex);
+        }
+      } else if (draggedTask.day !== targetDay) {
+        // Moving to a different day
+        moveTask(draggedTask.id, targetDay);
+      }
     }
     setDraggedTask(null);
   };
@@ -148,6 +168,7 @@ export default function Home() {
   const handleDragEnd = () => {
     setDraggedTask(null);
     setDragOverDay(null);
+    setDragOverIndex(null);
   };
 
   // Close overlays when clicking outside
@@ -242,7 +263,7 @@ export default function Home() {
                   {/* Tasks list */}
                   <div className="h-20 flex flex-col">
                     <div className="overflow-y-scroll min-h-0 flex-1 space-y-2">
-                    {cell.tasks.map((task) => (
+                    {cell.tasks.map((task, index) => (
                       <div
                         key={task.id}
                         ref={(el) => {
@@ -252,8 +273,10 @@ export default function Home() {
                         draggable
                         onDragStart={(e) => handleDragStart(e, task)}
                         onDragEnd={handleDragEnd}
+                        onDragOver={(e) => handleDragOverTask(e, cell.day, index)}
+                        onDrop={(e) => handleDrop(e, cell.day, index)}
                         onClick={() => handleStartEditTask(task, cell.day)}
-                        className={`overflow-y-auto min-h-0 flex-1 cursor-grab rounded bg-zinc-100 px-1.5 py-0.5 text-xs truncate hover:bg-zinc-200 active:cursor-grabbing ${
+                        className={`cursor-grab rounded bg-zinc-100 px-1.5 py-0.5 text-xs truncate hover:bg-zinc-200 active:cursor-grabbing ${
                           draggedTask?.id === task.id ? "opacity-50" : ""
                         } ${editingTask?.task.id === task.id ? "invisible" : ""}`}
                         title={`${task.title}${task.description ? `\n${task.description}` : ""}`}
