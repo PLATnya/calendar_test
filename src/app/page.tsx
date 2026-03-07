@@ -91,6 +91,9 @@ export default function Home() {
   };
 
   const handleStartEditTask = (task: Task, day: number) => {
+    // Don't allow editing immutable tasks
+    if (task.mutable === false) return;
+    
     const taskElement = taskRefs.current.get(task.id);
     if (taskElement) {
       const rect = taskElement.getBoundingClientRect();
@@ -111,6 +114,12 @@ export default function Home() {
 
   const handleSaveEditTask = () => {
     if (editingTask) {
+      // Don't allow saving edits to immutable tasks
+      if (editingTask.task.mutable === false) {
+        setEditingTask(null);
+        return;
+      }
+      
       // Only update if there are actual changes
       const originalTask = tasks.find(t => t.id === editingTask.task.id);
       const hasChanges = !originalTask || 
@@ -130,6 +139,11 @@ export default function Home() {
 
   const handleDeleteTask = () => {
     if (editingTask) {
+      // Don't allow deleting immutable tasks
+      if (editingTask.task.mutable === false) {
+        setEditingTask(null);
+        return;
+      }
       deleteTask(editingTask.task.id);
       setEditingTask(null);
     }
@@ -290,11 +304,14 @@ export default function Home() {
                   
                   {/* Tasks list */}
                   <div 
-                    onClick={(e) => {
-                      handleStartAddTask(cell.day, e);
-                    }}
-                  className="flex flex-1 flex-col min-h-0">
-                    <div className="overflow-y-auto min-h-0 flex-1 space-y-1">
+                    className="flex flex-1 flex-col min-h-0">
+                    <div 
+                      onClick={(e) => {
+                        if (e.target !== e.currentTarget) return;
+                        handleStartAddTask(cell.day, e);
+                      }}
+                    className="overflow-y-auto min-h-0 flex-1 space-y-1">
+                      
                     {cell.tasks.map((task, index) => {
                       const isMutable = task.mutable ?? true;
                       return (
