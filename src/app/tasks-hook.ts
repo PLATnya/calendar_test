@@ -1,24 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { Task } from "@/core/calendar-layout";
 
-const generateId = () => crypto.randomUUID();
-
 // Get current month and year for initial tasks
 const now = new Date();
 const currentMonth = now.getMonth();
 const currentYear = now.getFullYear();
 
-const INITIAL_TASKS: Task[] = [
-  { id: "init-2", title: "Mutable Task 1", description: "Can be moved", day: 4, month: currentMonth, year: currentYear, mutable: true },
-  { id: "init-3", title: "Mutable Task 2", description: "Can be moved", day: 4, month: currentMonth, year: currentYear, mutable: true },
-  { id: "init-4", title: "Mutable Task 3", description: "Can be moved", day: 4, month: currentMonth, year: currentYear, mutable: true },
-  { id: "init-5", title: "Mutable Task 4", description: "Can be moved", day: 4, month: currentMonth, year: currentYear, mutable: true },
-  { id: "init-6", title: "Mutable Task 5", description: "Can be moved", day: 4, month: currentMonth, year: currentYear, mutable: true },
-  { id: "init-7", title: "Mutable Task 6", description: "Can be moved", day: 4, month: currentMonth, year: currentYear, mutable: true },
-  { id: "init-8", title: "Mutable Task 7", description: "Can be moved", day: 4, month: currentMonth, year: currentYear, mutable: true },
-];
-
-// Fetch Ukraine public holidays for 2026 and create immutable tasks
+// Fetch Ukraine public holidays for a given year and create immutable tasks
 const fetchHolidayTasks = async (year: number): Promise<Task[]> => {
   try {
     const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/ua`);
@@ -45,74 +33,260 @@ const fetchHolidayTasks = async (year: number): Promise<Task[]> => {
   }
 };
 
+// Fetch tasks from MongoDB API
+const fetchDbTasks = async (): Promise<Task[]> => {
+  try {
+    const response = await fetch("/api/tasks");
+    if (!response.ok) {
+      console.error("Failed to fetch tasks from API:", response.status);
+      return [];
+    }
+    const tasks = await response.json();
+    // Map _id to id for UI compatibility and convert month to 0-based
+    return tasks.map((task: { _id: string; title: string; description: string; day: number; month: number; year: number; mutable?: boolean }) => ({
+      id: task._id,
+      title: task.title,
+      description: task.description,
+      day: task.day,
+      month: task.month - 1, // Convert to 0-based month
+      year: task.year,
+      mutable: task.mutable ?? true,
+    }));
+  } catch (error) {
+    console.error("Error fetching tasks from API:", error);
+    return [];
+  }
+};
+
+// Create a new task in MongoDB
+const createDbTask = async (task: Omit<Task, "id">): Promise<Task | null> => {
+  try {
+    const response = await fetch("/api/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: task.title,
+        description: task.description,
+        day: task.day,
+        month: task.month + 1, // Convert back to 1-based for API
+        year: task.year,
+        mutable: task.mutable,
+      }),
+    });
+    if (!response.ok) {
+      console.error("Failed to create task:", response.status);
+      return null;
+    }
+    const createdTask = await response.json();
+    // Map _id to id and convert month to 0-based
+    return {
+      id: createdTask._id,
+      title: createdTask.title,
+      description: createdTask.description,
+      day: createdTask.day,
+      month: createdTask.month - 1,
+      year: createdTask.year,
+      mutable: createdTask.mutable,
+    };
+  } catch (error) {
+    console.error("Error creating task:", error);
+    return null;
+  }
+};
+
+// Update a task in MongoDB (title and description only)
+const updateDbTask = async (id: string, title: string, description: string): Promise<boolean> => {
+  try {
+    const response = await fetch(`/api/tasks/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, description }),
+    });
+    if (!response.ok) {
+      console.error("Failed to update task:", response.status);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Error updating task:", error);
+    return false;
+  }
+};
+
+// Move a task in MongoDB (update day, month, year)
+const moveDbTask = async (id: string, newDay: number, newMonth: number, newYear: number): Promise<boolean> => {
+  try {
+    const response = await fetch(`/api/tasks/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        day: newDay,
+        month: newMonth + 1, // Convert to 1-based for API
+        year: newYear,
+      }),
+    });
+    if (!response.ok) {
+      console.error("Failed to move task:", response.status);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Error moving task:", error);
+    return false;
+  }
+};
+
+// Delete a task from MongoDB
+const deleteDbTask = async (id: string): Promise<boolean> => {
+  try {
+    const response = await fetch(`/api/tasks/${id}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) {
+      console.error("Failed to delete task:", response.status);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Error deleting task:", error);
+    return false;
+  }
+};
+
 export const useTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [lastVisitedYear, setLastVisitedYear] = useState<number>(() => currentYear);
   const isInitialized = useRef(false);
 
   // Fetch holidays for a given year and replace immutable tasks
   const changeYear = useCallback(async (year: number) => {
     if (year === lastVisitedYear) return;
-    
+
     const holidayTasks = await fetchHolidayTasks(year);
-    
+
     setTasks((prev) => {
-      // Remove immutable tasks (holidays from previous year)
+      // Remove immutable tasks (holidays from previous year) and keep DB tasks
       const mutableTasks = prev.filter((task) => task.mutable !== false);
       // Add new holiday tasks for the new year
       return [...holidayTasks, ...mutableTasks];
     });
-    
+
     setLastVisitedYear(year);
   }, [lastVisitedYear]);
 
-  // Fetch holidays on mount and initialize tasks
+  // Initial load: fetch DB tasks and holidays
   useEffect(() => {
     if (isInitialized.current) return;
     isInitialized.current = true;
 
     const initTasks = async () => {
-      const holidayTasks = await fetchHolidayTasks(currentYear);
-      // Combine holiday tasks (immutable) with initial tasks
-      setTasks([...holidayTasks, ...INITIAL_TASKS]);
+      setIsLoading(true);
+      try {
+        // Fetch both DB tasks and holidays in parallel
+        const [dbTasks, holidayTasks] = await Promise.all([
+          fetchDbTasks(),
+          fetchHolidayTasks(currentYear),
+        ]);
+        // Combine holiday tasks (immutable) with DB tasks (mutable)
+        setTasks([...holidayTasks, ...dbTasks]);
+      } catch (error) {
+        console.error("Error initializing tasks:", error);
+        // Fallback to just holidays if DB fails
+        const holidayTasks = await fetchHolidayTasks(currentYear);
+        setTasks(holidayTasks);
+      } finally {
+        setIsLoading(false);
+      }
     };
     initTasks();
   }, []);
 
-  const addTask = useCallback((day: number, month: number, year: number, title: string, description: string) => {
+  const addTask = useCallback(async (day: number, month: number, year: number, title: string, description: string) => {
     const newTask: Task = {
-      id: generateId(),
+      id: "", // Will be set after API response
       title: title.trim() || "Untitled",
       description: description.trim(),
       day,
       month,
       year,
+      mutable: true,
     };
-    setTasks((prev) => [...prev, newTask]);
-    return newTask;
+
+    // Optimistically add to local state first
+    const tempId = `temp-${Date.now()}`;
+    const optimisticTask: Task = { ...newTask, id: tempId };
+    setTasks((prev) => [...prev, optimisticTask]);
+
+    // Then call API
+    const createdTask = await createDbTask(newTask);
+    if (createdTask) {
+      // Replace optimistic task with actual task from DB
+      setTasks((prev) =>
+        prev.map((t) => (t.id === tempId ? createdTask : t))
+      );
+      return createdTask;
+    } else {
+      // Remove optimistic task if API failed
+      setTasks((prev) => prev.filter((t) => t.id !== tempId));
+      return null;
+    }
   }, []);
 
-  const updateTask = useCallback((id: string, title: string, description: string) => {
+  const updateTask = useCallback(async (id: string, title: string, description: string) => {
+    // Skip immutable tasks
+    const task = tasks.find((t) => t.id === id);
+    if (!task || task.mutable === false) return;
+
+    // Optimistic update
     setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id
-          ? { ...task, title: title.trim() || "Untitled", description: description.trim() }
-          : task
+      prev.map((t) =>
+        t.id === id
+          ? { ...t, title: title.trim() || "Untitled", description: description.trim() }
+          : t
       )
     );
-  }, []);
 
-  const deleteTask = useCallback((id: string) => {
-    setTasks((prev) => prev.filter((task) => task.id !== id));
-  }, []);
+    // Call API (skip for holiday tasks)
+    if (!id.startsWith("holiday-")) {
+      await updateDbTask(id, title, description);
+    }
+  }, [tasks]);
 
-  const moveTask = useCallback((id: string, newDay: number, newMonth: number, newYear: number) => {
+  const deleteTask = useCallback(async (id: string) => {
+    // Skip immutable tasks
+    const task = tasks.find((t) => t.id === id);
+    if (!task || task.mutable === false) return;
+
+    // Optimistic delete
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+
+    // Call API (skip for holiday tasks)
+    if (!id.startsWith("holiday-")) {
+      await deleteDbTask(id);
+    }
+  }, [tasks]);
+
+  const moveTask = useCallback(async (id: string, newDay: number, newMonth: number, newYear: number) => {
+    // Skip immutable tasks
+    const task = tasks.find((t) => t.id === id);
+    if (!task || task.mutable === false) return;
+
+    // Optimistic update
     setTasks((prev) =>
-      prev.map((task) => (task.id === id ? { ...task, day: newDay, month: newMonth, year: newYear } : task))
+      prev.map((t) =>
+        t.id === id ? { ...t, day: newDay, month: newMonth, year: newYear } : t
+      )
     );
-  }, []);
+
+    // Call API (skip for holiday tasks)
+    if (!id.startsWith("holiday-")) {
+      await moveDbTask(id, newDay, newMonth, newYear);
+    }
+  }, [tasks]);
 
   const reorderTasks = useCallback((day: number, fromIndex: number, toIndex: number) => {
+    // Reorder is local-only (doesn't persist order in DB)
     setTasks((prev) => {
       const dayTasks = prev.filter((task) => task.day === day);
       const otherTasks = prev.filter((task) => task.day !== day);
@@ -130,6 +304,7 @@ export const useTasks = () => {
 
   return {
     tasks,
+    isLoading,
     lastVisitedYear,
     changeYear,
     addTask,

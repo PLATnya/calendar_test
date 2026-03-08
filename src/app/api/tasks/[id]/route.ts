@@ -39,11 +39,30 @@ export async function PUT(request: Request, { params }: RouteParams) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, description } = body;
+    const { title, description, day, month, year } = body;
 
     // Validate ObjectId format
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid task ID format" }, { status: 400 });
+    }
+
+    // Validate date fields if provided
+    if (day !== undefined && (day < 1 || day > 31)) {
+      return NextResponse.json({ error: "Invalid day value. Must be 1-31" }, { status: 400 });
+    }
+    if (month !== undefined && (month < 1 || month > 12)) {
+      return NextResponse.json({ error: "Invalid month value. Must be 1-12" }, { status: 400 });
+    }
+    if (year !== undefined && (year < 1900 || year > 2100)) {
+      return NextResponse.json({ error: "Invalid year value. Must be 1900-2100" }, { status: 400 });
+    }
+
+    // Validate actual date if all date fields are provided
+    if (day !== undefined && month !== undefined && year !== undefined) {
+      const date = new Date(year, month - 1, day);
+      if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+        return NextResponse.json({ error: "Invalid date. The specified day does not exist in this month." }, { status: 400 });
+      }
     }
 
     await connectToDatabase();
@@ -53,6 +72,9 @@ export async function PUT(request: Request, { params }: RouteParams) {
         $set: {
           ...(title !== undefined && { title: title.trim() || "Untitled" }),
           ...(description !== undefined && { description: description.trim() }),
+          ...(day !== undefined && { day }),
+          ...(month !== undefined && { month }),
+          ...(year !== undefined && { year }),
         },
       },
       { new: true }

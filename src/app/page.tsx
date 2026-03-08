@@ -17,7 +17,7 @@ type AddingTask = {
 } | null;
 
 export default function Home() {
-  const { tasks, lastVisitedYear, changeYear, addTask, updateTask, deleteTask, moveTask, reorderTasks } = useTasks();
+  const { tasks, isLoading, lastVisitedYear, changeYear, addTask, updateTask, deleteTask, moveTask, reorderTasks } = useTasks();
   const [filterText, setFilterText] = useState("");
   const filteredTasks = useMemo(() =>
     filterText
@@ -226,6 +226,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-linear-to-b from-amber-50 via-white to-sky-100 p-3 sm:p-4">
       <main className="relative mx-auto flex h-[calc(100vh-1.5rem)] w-full flex-col rounded-3xl border border-zinc-200/80 bg-white/90 p-4 shadow-xl shadow-zinc-300/20 backdrop-blur sm:h-[calc(100vh-2rem)] sm:p-6">
+        {isLoading && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center rounded-3xl bg-white/80">
+            <div className="flex flex-col items-center gap-2">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-sky-200 border-t-sky-500"></div>
+              <span className="text-sm font-medium text-zinc-600">Loading tasks...</span>
+            </div>
+          </div>
+        )}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
