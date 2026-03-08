@@ -4,6 +4,41 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useCalendarLayout } from "./calendar-layout-hook";
 import { useTasks } from "./tasks-hook";
 import type { Task } from "@/core/calendar-layout";
+import {
+  PageWrapper,
+  MainContainer,
+  LoadingOverlay,
+  LoadingContainer,
+  Spinner,
+  LoadingText,
+  Header,
+  HeaderLeft,
+  Title,
+  FilterInput,
+  HeaderRight,
+  NavButton,
+  CalendarSection,
+  WeekDaysGrid,
+  WeekDayHeader,
+  DaysGrid,
+  EmptyCell,
+  DayCell,
+  DayButton,
+  TasksContainer,
+  TasksList,
+  TaskItem,
+  TaskOverlay,
+  TaskForm,
+  TaskInput,
+  TaskTextArea,
+  TaskButtonGroup,
+  TaskButton,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  CloseButton,
+} from "@/styles/CalendarStyles";
 
 type EditingTask = {
   task: Task;
@@ -76,7 +111,6 @@ export default function Home() {
           width: rect.width,
         },
       });
-      //}
     }
     setNewTaskTitle("");
     setNewTaskDescription("");
@@ -224,152 +258,125 @@ export default function Home() {
   }, [editingTask, addingTask]);
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-amber-50 via-white to-sky-100 p-3 sm:p-4">
-      <main className="relative mx-auto flex h-[calc(100vh-1.5rem)] w-full flex-col rounded-3xl border border-zinc-200/80 bg-white/90 p-4 shadow-xl shadow-zinc-300/20 backdrop-blur sm:h-[calc(100vh-2rem)] sm:p-6">
+    <PageWrapper>
+      <MainContainer>
         {isLoading && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center rounded-3xl bg-white/80">
-            <div className="flex flex-col items-center gap-2">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-sky-200 border-t-sky-500"></div>
-              <span className="text-sm font-medium text-zinc-600">Loading tasks...</span>
-            </div>
-          </div>
+          <LoadingOverlay>
+            <LoadingContainer>
+              <Spinner />
+              <LoadingText>Loading tasks...</LoadingText>
+            </LoadingContainer>
+          </LoadingOverlay>
         )}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
-              {monthLabel}
-            </h1>
-            <input
+        
+        <Header>
+          <HeaderLeft>
+            <Title>{monthLabel}</Title>
+            <FilterInput
               type="text"
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
               placeholder="Filter tasks..."
-              className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 placeholder-zinc-400 focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-400"
             />
-          </div>
+          </HeaderLeft>
 
-          <div className="flex items-center gap-2">
-            <button
+          <HeaderRight>
+            <NavButton
               type="button"
               onClick={handleGoToPreviousMonth}
-              className="rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-50"
             >
               Previous
-            </button>
-            <button
+            </NavButton>
+            <NavButton
               type="button"
               onClick={handleGoToNextMonth}
-              className="rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-50"
             >
               Next
-            </button>
-          </div>
-        </div>
+            </NavButton>
+          </HeaderRight>
+        </Header>
 
-        <div className="flex flex-1 flex-col gap-2 sm:gap-3">
-          <div className="grid grid-cols-7 gap-2 sm:gap-3">
+        <CalendarSection>
+          <WeekDaysGrid>
             {weekDays.map((weekDay) => (
-              <div
-                key={weekDay}
-                className="rounded-xl bg-zinc-100 py-2 text-center text-xs font-semibold tracking-wide text-zinc-600 sm:text-sm"
-              >
+              <WeekDayHeader key={weekDay}>
                 {weekDay}
-              </div>
+              </WeekDayHeader>
             ))}
-          </div>
+          </WeekDaysGrid>
 
-          <div className="grid flex-1 auto-rows-fr grid-cols-7 gap-1 sm:gap-1 max-h-250">
+          <DaysGrid>
             {cells.map((cell) =>
               cell.type === "empty" ? (
-                <div
+                <EmptyCell
                   key={cell.key}
-                  className="rounded-xl border border-transparent bg-transparent"
-                  aria-hidden="true"
                 />
               ) : (
-                <div
+                <DayCell
                   key={cell.key}
+                  $isToday={cell.isToday}
+                  $isDragOver={dragOverDay === cell.day}
+                  $isSelected={selectedDay === cell.day}
                   onDragOver={(e) => handleDragOver(e, cell.day)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, cell.day)}
-                  className={`relative flex flex-col rounded-xl border p-2 text-sm font-medium transition sm:p-2 sm:text-base ${
-                    cell.isToday
-                      ? "border-orange-400 bg-orange-100 text-orange-900"
-                      : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
-                  } ${
-                    dragOverDay === cell.day
-                      ? "border-sky-400 bg-sky-100 ring-2 ring-sky-300"
-                      : ""
-                  } ${
-                    selectedDay === cell.day
-                      ? "ring-2 ring-sky-300 ring-offset-1"
-                      : ""
-                  }`}
                 >
-                  <button
+                  <DayButton
                     type="button"
                     onClick={(e) => {
                       if (e.target !== e.currentTarget) return;
                       handleStartAddTask(cell.day, e);
                     }}
-                    className="flex w-full items-start justify-end text-left"
                   >
                     {cell.day}
-                  </button>
+                  </DayButton>
                   
                   {/* Tasks list */}
-                  <div 
-                    className="flex flex-1 flex-col min-h-0">
-                    <div 
+                  <TasksContainer>
+                    <TasksList 
                       onClick={(e) => {
                         if (e.target !== e.currentTarget) return;
                         handleStartAddTask(cell.day, e);
                       }}
-                    className="overflow-y-auto min-h-0 flex-1 space-y-1">
-                      
-                    {cell.tasks.map((task, index) => {
-                      const isMutable = task.mutable ?? true;
-                      return (
-                      <div
-                        key={task.id}
-                        ref={(el) => {
-                          if (el) taskRefs.current.set(task.id, el);
-                          else taskRefs.current.delete(task.id);
-                        }}
-                        draggable={isMutable}
-                        onDragStart={(e) => handleDragStart(e, task)}
-                        onDragEnd={handleDragEnd}
-                        onDragOver={(e) => handleDragOverTask(e, cell.day, index)}
-                        onDrop={(e) => handleDrop(e, cell.day, index)}
-                        onClick={() => handleStartEditTask(task, cell.day)}
-                        className={`rounded px-1.5 py-0.5 text-xs truncate ${
-                          !isMutable 
-                            ? "bg-orange-200 cursor-default hover:bg-orange-300" 
-                            : "bg-zinc-100 cursor-grab hover:bg-zinc-200 active:cursor-grabbing"
-                        } ${
-                          draggedTask?.id === task.id ? "opacity-50" : ""
-                        } ${editingTask?.task.id === task.id ? "invisible" : ""}`}
-                        title={`${task.title}${task.description ? `\n${task.description}` : ""}`}
-                      >
-                        {task.title}
-                      </div>
-                      );
-                    })}
-                    </div>
-                  </div>
+                    >
+                      {cell.tasks.map((task, index) => {
+                        const isMutable = task.mutable ?? true;
+                        return (
+                          <TaskItem
+                            key={task.id}
+                            ref={(el) => {
+                              if (el) taskRefs.current.set(task.id, el);
+                              else taskRefs.current.delete(task.id);
+                            }}
+                            draggable={isMutable}
+                            onDragStart={(e) => handleDragStart(e, task)}
+                            onDragEnd={handleDragEnd}
+                            onDragOver={(e) => handleDragOverTask(e, cell.day, index)}
+                            onDrop={(e) => handleDrop(e, cell.day, index)}
+                            onClick={() => handleStartEditTask(task, cell.day)}
+                            $isMutable={isMutable}
+                            $isDragging={draggedTask?.id === task.id}
+                            title={`${task.title}${task.description ? `\n${task.description}` : ""}`}
+                          >
+                            {task.title}
+                          </TaskItem>
+                        );
+                      })}
+                    </TasksList>
+                  </TasksContainer>
 
                   {/* Edit overlay - positioned at task location */}
                   {editingTask?.day === cell.day && (
-                    <div
-                      className="task-edit-overlay absolute z-30"
+                    <TaskOverlay
+                      className="task-edit-overlay"
                       style={{
                         top: editingTask.position.top,
                         left: editingTask.position.left,
                         width: editingTask.position.width,
                       }}
                     >
-                      <div className="rounded-lg border border-sky-300 bg-sky-50 p-2 shadow-lg">
-                        <input
+                      <TaskForm>
+                        <TaskInput
                           type="text"
                           value={editingTask.task.title}
                           onChange={(e) =>
@@ -378,11 +385,10 @@ export default function Home() {
                               task: { ...editingTask.task, title: e.target.value },
                             })
                           }
-                          className="mb-1 w-full rounded border border-sky-300 px-1 py-0.5 text-xs"
                           placeholder="Task title"
                           autoFocus
                         />
-                        <textarea
+                        <TaskTextArea
                           value={editingTask.task.description}
                           onChange={(e) =>
                             setEditingTask({
@@ -390,104 +396,96 @@ export default function Home() {
                               task: { ...editingTask.task, description: e.target.value },
                             })
                           }
-                          className="mb-1 w-full resize-none rounded border border-sky-300 px-1 py-0.5 text-xs"
                           placeholder="Description (optional)"
                           rows={2}
                         />
-                        <div className="flex gap-1">
-                          <button
+                        <TaskButtonGroup>
+                          <TaskButton
                             onClick={handleSaveEditTask}
-                            className="rounded bg-sky-500 px-1 py-0.5 text-xs text-white hover:bg-sky-600"
+                            $variant="primary"
                           >
                             Save
-                          </button>
-                          <button
+                          </TaskButton>
+                          <TaskButton
                             onClick={handleCancelEditTask}
-                            className="rounded bg-zinc-300 px-1 py-0.5 text-xs text-zinc-700 hover:bg-zinc-400"
                           >
                             Cancel
-                          </button>
-                          <button
+                          </TaskButton>
+                          <TaskButton
                             onClick={handleDeleteTask}
-                            className="ml-auto rounded bg-red-400 px-1 py-0.5 text-xs text-white hover:bg-red-500"
+                            $variant="danger"
                           >
                             Delete
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                          </TaskButton>
+                        </TaskButtonGroup>
+                      </TaskForm>
+                    </TaskOverlay>
                   )}
 
                   {/* Add task overlay */}
                   {!editingTask && addingTask?.day === cell.day && (
-                    <div
-                      className="task-add-overlay absolute z-30"
+                    <TaskOverlay
+                      className="task-add-overlay"
                       style={{
                         top: addingTask.position.top,
                         left: addingTask.position.left,
                         width: addingTask.position.width,
                       }}
                     >
-                      <div className="rounded-lg border border-sky-300 bg-sky-50 p-2 shadow-lg">
-                        <input
+                      <TaskForm>
+                        <TaskInput
                           type="text"
                           value={newTaskTitle}
                           onChange={(e) => setNewTaskTitle(e.target.value)}
-                          className="mb-1 w-full rounded border border-sky-300 px-1 py-0.5 text-xs"
                           placeholder="Task title"
                           autoFocus
                         />
-                        <textarea
+                        <TaskTextArea
                           value={newTaskDescription}
                           onChange={(e) => setNewTaskDescription(e.target.value)}
-                          className="mb-1 w-full resize-none rounded border border-sky-300 px-1 py-0.5 text-xs"
                           placeholder="Description (optional)"
                           rows={2}
                         />
-                        <div className="flex gap-1">
-                          <button
+                        <TaskButtonGroup>
+                          <TaskButton
                             onClick={handleSaveNewTask}
-                            className="rounded bg-sky-500 px-1 py-0.5 text-xs text-white hover:bg-sky-600"
+                            $variant="primary"
                           >
                             Add
-                          </button>
-                          <button
+                          </TaskButton>
+                          <TaskButton
                             onClick={handleCancelAddTask}
-                            className="rounded bg-zinc-300 px-1 py-0.5 text-xs text-zinc-700 hover:bg-zinc-400"
                           >
                             Cancel
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                          </TaskButton>
+                        </TaskButtonGroup>
+                      </TaskForm>
+                    </TaskOverlay>
                   )}
-                </div>
+                </DayCell>
               ),
             )}
-          </div>
-        </div>
+          </DaysGrid>
+        </CalendarSection>
 
-        {selectedDay !== null ? (
-          <div className="absolute inset-0 z-20 flex items-center justify-center rounded-3xl bg-zinc-900/35 p-4 sm:p-6">
-            <section className="w-full max-w-xl rounded-2xl border border-sky-200 bg-sky-50 p-4 shadow-lg sm:p-5">
-              <div className="mb-4 flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold text-zinc-900 sm:text-xl">
-                    {selectedDay} {monthLabel}
-                  </h2>
-                </div>
-                <button
+        {selectedDay !== null && (
+          <ModalOverlay>
+            <ModalContent>
+              <ModalHeader>
+                <ModalTitle>
+                  {selectedDay} {monthLabel}
+                </ModalTitle>
+                <CloseButton
                   type="button"
                   onClick={() => setSelectedDay(null)}
-                  className="rounded-lg border border-sky-300 bg-white px-3 py-1.5 text-sm font-medium text-sky-800 transition hover:border-sky-400 hover:bg-sky-100"
                 >
                   Close
-                </button>
-              </div>
-            </section>
-          </div>
-        ) : null}
-      </main>
-    </div>
+                </CloseButton>
+              </ModalHeader>
+            </ModalContent>
+          </ModalOverlay>
+        )}
+      </MainContainer>
+    </PageWrapper>
   );
 }
