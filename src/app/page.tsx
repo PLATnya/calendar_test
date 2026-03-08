@@ -190,10 +190,10 @@ export default function Home() {
     
     // Determine if this is a reorder (same day) or move (different day)
     if (draggedTask.day === targetDay && targetIndex !== undefined) {
-      const currentTasks = tasks.filter(t => t.day === targetDay);
+      const currentTasks = tasks.filter(t => t.day === targetDay && t.month === currentMonth && t.year === currentYear);
       const currentIndex = currentTasks.findIndex(t => t.id === draggedTask.id);
       if (currentIndex !== -1 && currentIndex !== targetIndex) {
-        reorderTasks(targetDay, currentIndex, targetIndex);
+        reorderTasks(targetDay, currentMonth, currentYear, currentIndex, targetIndex);
       }
     } else if (draggedTask.day !== targetDay) {
       // Moving to a different day

@@ -25,6 +25,7 @@ const fetchHolidayTasks = async (year: number): Promise<Task[]> => {
         month: month - 1, // Convert to 0-based month
         year,
         mutable: false,
+        order: 0,
       };
     });
   } catch (error) {
@@ -43,7 +44,7 @@ const fetchDbTasks = async (): Promise<Task[]> => {
     }
     const tasks = await response.json();
     // Map _id to id for UI compatibility and convert month to 0-based
-    return tasks.map((task: { _id: string; title: string; description: string; day: number; month: number; year: number; mutable?: boolean }) => ({
+    return tasks.map((task: { _id: string; title: string; description: string; day: number; month: number; year: number; mutable?: boolean; order?: number }) => ({
       id: task._id,
       title: task.title,
       description: task.description,
@@ -51,6 +52,7 @@ const fetchDbTasks = async (): Promise<Task[]> => {
       month: task.month - 1, // Convert to 0-based month
       year: task.year,
       mutable: task.mutable ?? true,
+      order: task.order ?? 0,
     }));
   } catch (error) {
     console.error("Error fetching tasks from API:", error);
@@ -87,6 +89,7 @@ const createDbTask = async (task: Omit<Task, "id">): Promise<Task | null> => {
       month: createdTask.month - 1,
       year: createdTask.year,
       mutable: createdTask.mutable,
+      order: createdTask.order ?? 0,
     };
   } catch (error) {
     console.error("Error creating task:", error);
@@ -153,6 +156,35 @@ const deleteDbTask = async (id: string): Promise<boolean> => {
   }
 };
 
+// Reorder tasks in MongoDB (batch update)
+const reorderDbTasks = async (
+  day: number,
+  month: number,
+  year: number,
+  taskOrders: { id: string; order: number }[]
+): Promise<boolean> => {
+  try {
+    const response = await fetch("/api/tasks/reorder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        day,
+        month: month + 1, // Convert to 1-based for API
+        year,
+        taskOrders,
+      }),
+    });
+    if (!response.ok) {
+      console.error("Failed to reorder tasks:", response.status);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Error reordering tasks:", error);
+    return false;
+  }
+};
+
 export const useTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -202,36 +234,47 @@ export const useTasks = () => {
     initTasks();
   }, []);
 
-  const addTask = useCallback(async (day: number, month: number, year: number, title: string, description: string) => {
-    const newTask: Task = {
-      id: "", // Will be set after API response
-      title: title.trim() || "Untitled",
-      description: description.trim(),
-      day,
-      month,
-      year,
-      mutable: true,
-    };
-
-    // Optimistically add to local state first
-    const tempId = `temp-${Date.now()}`;
-    const optimisticTask: Task = { ...newTask, id: tempId };
-    setTasks((prev) => [...prev, optimisticTask]);
-
-    // Then call API
-    const createdTask = await createDbTask(newTask);
-    if (createdTask) {
-      // Replace optimistic task with actual task from DB
-      setTasks((prev) =>
-        prev.map((t) => (t.id === tempId ? createdTask : t))
+  const addTask = useCallback(
+    async (day: number, month: number, year: number, title: string, description: string) => {
+      // Get the highest order for tasks on this day
+      const dayTasks = tasks.filter(
+        (task) => task.day === day && task.month === month && task.year === year
       );
-      return createdTask;
-    } else {
-      // Remove optimistic task if API failed
-      setTasks((prev) => prev.filter((t) => t.id !== tempId));
-      return null;
-    }
-  }, []);
+      const maxOrder = dayTasks.reduce((max, task) => Math.max(max, task.order ?? 0), -1);
+      const newOrder = maxOrder + 1;
+
+      const newTask: Task = {
+        id: "", // Will be set after API response
+        title: title.trim() || "Untitled",
+        description: description.trim(),
+        day,
+        month,
+        year,
+        mutable: true,
+        order: newOrder,
+      };
+
+      // Optimistically add to local state first
+      const tempId = `temp-${Date.now()}`;
+      const optimisticTask: Task = { ...newTask, id: tempId };
+      setTasks((prev) => [...prev, optimisticTask]);
+
+      // Then call API
+      const createdTask = await createDbTask(newTask);
+      if (createdTask) {
+        // Replace optimistic task with actual task from DB
+        setTasks((prev) =>
+          prev.map((t) => (t.id === tempId ? createdTask : t))
+        );
+        return createdTask;
+      } else {
+        // Remove optimistic task if API failed
+        setTasks((prev) => prev.filter((t) => t.id !== tempId));
+        return null;
+      }
+    },
+    [tasks]
+  );
 
   const updateTask = useCallback(async (id: string, title: string, description: string) => {
     // Skip immutable tasks
@@ -285,17 +328,51 @@ export const useTasks = () => {
     }
   }, [tasks]);
 
-  const reorderTasks = useCallback((day: number, fromIndex: number, toIndex: number) => {
-    // Reorder is local-only (doesn't persist order in DB)
-    setTasks((prev) => {
-      const dayTasks = prev.filter((task) => task.day === day);
-      const otherTasks = prev.filter((task) => task.day !== day);
-      const reorderedDayTasks = [...dayTasks];
+  const reorderTasks = useCallback(
+    async (day: number, month: number, year: number, fromIndex: number, toIndex: number) => {
+      // Get tasks for this day before reordering
+      const dayTasks = tasks.filter(
+        (task) => task.day === day && task.month === month && task.year === year
+      );
+      const mutableDayTasks = dayTasks.filter((task) => task.mutable !== false);
+      
+      if (mutableDayTasks.length === 0) return;
+
+      // Validate indices are within bounds
+      if (fromIndex < 0 || fromIndex >= mutableDayTasks.length ||
+          toIndex < 0 || toIndex >= mutableDayTasks.length) {
+        return;
+      }
+
+      // Reorder locally first (optimistic update)
+      const reorderedDayTasks = [...mutableDayTasks];
       const [movedTask] = reorderedDayTasks.splice(fromIndex, 1);
       reorderedDayTasks.splice(toIndex, 0, movedTask);
-      return [...otherTasks, ...reorderedDayTasks];
-    });
-  }, []);
+
+      // Update order values for all mutable tasks
+      const reorderedWithOrder = reorderedDayTasks.map((task, index) => ({
+        ...task,
+        order: index,
+      }));
+
+      setTasks((prev) => {
+        const otherTasks = prev.filter(
+          (t) => !(t.day === day && t.month === month && t.year === year && t.mutable !== false)
+        );
+        return [...otherTasks, ...reorderedWithOrder];
+      });
+
+      // Persist to database (skip for holiday tasks)
+      const taskOrders = reorderedDayTasks
+        .filter((task) => !task.id.startsWith("holiday-"))
+        .map((task, index) => ({ id: task.id, order: index }));
+
+      if (taskOrders.length > 0) {
+        await reorderDbTasks(day, month, year, taskOrders);
+      }
+    },
+    [tasks]
+  );
 
   const getTasksForDay = useCallback(
     (day: number, month: number, year: number) => tasks.filter((task) => task.day === day && task.month === month && task.year === year),

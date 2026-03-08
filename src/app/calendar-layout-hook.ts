@@ -21,13 +21,17 @@ export const useCalendarLayout = (tasks: Task[] = []) => {
           task.month === month && 
           task.year === year
         );
-        // Sort: non-mutable tasks first, then mutable tasks
+        // Sort: non-mutable tasks first, then mutable tasks sorted by order
         dayTasks.sort((a, b) => {
           const aMutable = a.mutable ?? true;
           const bMutable = b.mutable ?? true;
+          // Non-mutable tasks (holidays) come first
           if (!aMutable && bMutable) return -1;
           if (aMutable && !bMutable) return 1;
-          return 0;
+          // For mutable tasks, sort by order
+          const aOrder = a.order ?? 0;
+          const bOrder = b.order ?? 0;
+          return aOrder - bOrder;
         });
         return {
           ...cell,

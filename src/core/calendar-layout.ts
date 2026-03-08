@@ -8,6 +8,7 @@ export type Task = {
   month: number;
   year: number;
   mutable?: boolean;
+  order?: number;
 };
 
 export type CalendarCell =

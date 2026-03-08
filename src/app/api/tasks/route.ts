@@ -5,7 +5,7 @@ import { TaskModel } from "@/lib/task-model";
 export async function GET() {
   try {
     await connectToDatabase();
-    const tasks = await TaskModel.find({}).sort({ year: 1, month: 1, day: 1 });
+    const tasks = await TaskModel.find({}).sort({ year: 1, month: 1, day: 1, order: 1 });
     // Convert _id to string for each task for JSON serialization
     const tasksWithStringIds = tasks.map((task) => ({
       ...task.toObject(),
@@ -49,6 +49,16 @@ export async function POST(request: Request) {
 
     await connectToDatabase();
 
+    // Use atomic operation to get and increment the highest order for tasks on this day
+    // to minimize race condition window. The unique index on (day, month, year, order)
+    // provides the safety net against true duplicates.
+    const lastTask = await TaskModel.findOne({ day, month, year })
+      .sort({ order: -1 })
+      .select("order")
+      .lean();
+    
+    const newOrder = lastTask && lastTask.order !== undefined ? lastTask.order + 1 : 0;
+
     const newTask = await TaskModel.create({
       title: title.trim() || "Untitled",
       description: description?.trim() || "",
@@ -56,6 +66,7 @@ export async function POST(request: Request) {
       month,
       year,
       mutable: mutable ?? true,
+      order: newOrder,
     });
 
     // Convert _id to string for JSON serialization
@@ -66,6 +77,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json(taskWithStringId, { status: 201 });
   } catch (error) {
+    // Handle duplicate key error (race condition)
+    if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
+      console.error("Duplicate order detected");
+      return NextResponse.json({ error: "Concurrent task creation detected. Please retry." }, { status: 409 });
+    }
     console.error("Error creating task:", error);
     return NextResponse.json({ error: "Failed to create task" }, { status: 500 });
   }
