@@ -28,7 +28,7 @@ export const theme = {
     },
     
     task: {
-      background: '#ffedd5',
+      background: '#fff5d9c2',
       hover: '#ffffff63',
       text: '#000000',
     },

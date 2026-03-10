@@ -191,7 +191,7 @@ export const DaysGrid = styled.div`
   grid-auto-rows: 1fr;
   gap: 4px;
   flex: 1;
-
+  max-height: 160px;
   @media (min-width: 640px) {
     gap: 4px;
   }
@@ -213,9 +213,11 @@ interface DayCellProps {
 
 export const DayCell = styled.div<DayCellProps>`
   position: relative;
-  display: flex;
   flex-direction: column;
   padding: 8px;
+  height: 160px;
+  overflow-y: scroll;
+
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
@@ -283,17 +285,16 @@ export const TasksContainer = styled.div`
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 0;
-  overflow: hidden;
 `;
 
 export const TasksList = styled.div`
-  overflow-y: auto;
   min-height: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 4px;
+
+
 `;
 
 // Task Item
@@ -307,8 +308,8 @@ export const TaskItem = styled.div<TaskItemProps>`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   border-radius: 0;
   box-shadow: ${({ theme }) => theme.shadows.xl};
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+  white-space: nowrap;
+  //text-overflow: ellipsis;
   cursor: pointer;
   transition: background ${({ theme }) => theme.transitions.fast};
 
@@ -351,7 +352,7 @@ export const TaskOverlay = styled.div`
 `;
 
 export const TaskForm = styled.div`
-  padding: 8px 12px;
+  padding: 1px 5px;
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   border: 1px solid ${({ theme }) => theme.colors.border.default};
   background: ${({ theme }) => theme.colors.task.background};
@@ -395,6 +396,11 @@ export const TaskTextArea = styled.textarea`
 export const TaskButtonGroup = styled.div`
   display: flex;
   gap: 4px;
+  width: 100%;
+
+  > button {
+    flex: 1;
+  }
 `;
 
 interface TaskButtonProps {
@@ -404,32 +410,29 @@ interface TaskButtonProps {
 export const TaskButton = styled.button<TaskButtonProps>`
   padding: 4px 8px;
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
-  border-radius: ${({ theme }) => theme.borderRadius.sm};
   transition: all ${({ theme }) => theme.transitions.fast};
 
   ${({ $variant, theme }) => {
     switch ($variant) {
       case 'primary':
         return css`
-          background: ${theme.colors.accent.primary};
-          color: ${theme.colors.text.inverse};
-          border: 1px solid ${theme.colors.accent.primary};
+          background: ${theme.colors.task.background};
+          color: ${theme.colors.text.primary};
 
           &:hover {
-            background: ${theme.colors.accent.hover};
-            border-color: ${theme.colors.accent.hover};
+            background: ${theme.colors.border.hover};
+            border-color: ${theme.colors.border.default};
           }
         `;
       case 'danger':
         return css`
-          background: ${theme.colors.danger};
-          color: ${theme.colors.text.inverse};
-          border: 1px solid ${theme.colors.danger};
-          margin-left: auto;
+          background: ${theme.colors.task.background};
+          color: ${theme.colors.text.primary};
 
           &:hover {
-            background: #dc2626;
-            border-color: #dc2626;
+            background: ${theme.colors.danger};
+            border-color: ${theme.colors.danger};
+            color: ${theme.colors.text.inverse};
           }
         `;
       default:
