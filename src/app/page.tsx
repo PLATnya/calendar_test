@@ -77,7 +77,6 @@ export default function Home() {
   const [newTaskDescription, setNewTaskDescription] = useState("");
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [dragOverDay, setDragOverDay] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   
   const taskRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
@@ -197,12 +196,11 @@ export default function Home() {
     e.dataTransfer.setData("text/plain", task.id);
   };
 
-  const handleDragOverTask = (e: React.DragEvent, day: number, index: number) => {
+  const handleDragOverTask = (e: React.DragEvent, day: number) => {
     e.preventDefault();
     e.stopPropagation();
     e.dataTransfer.dropEffect = "move";
     setDragOverDay(day);
-    setDragOverIndex(index);
   };
 
   const handleDragOver = (e: React.DragEvent, day: number) => {
@@ -218,7 +216,6 @@ export default function Home() {
   const handleDrop = (e: React.DragEvent, targetDay: number, targetIndex?: number) => {
     e.preventDefault();
     setDragOverDay(null);
-    setDragOverIndex(null);
     
     if (!draggedTask) return;
     
@@ -239,7 +236,6 @@ export default function Home() {
   const handleDragEnd = () => {
     setDraggedTask(null);
     setDragOverDay(null);
-    setDragOverIndex(null);
   };
 
   // Close overlays when clicking outside
@@ -351,7 +347,7 @@ export default function Home() {
                             draggable={isMutable}
                             onDragStart={(e) => handleDragStart(e, task)}
                             onDragEnd={handleDragEnd}
-                            onDragOver={(e) => handleDragOverTask(e, cell.day, index)}
+                            onDragOver={(e) => handleDragOverTask(e, cell.day)}
                             onDrop={(e) => handleDrop(e, cell.day, index)}
                             onClick={() => handleStartEditTask(task, cell.day)}
                             $isMutable={isMutable}

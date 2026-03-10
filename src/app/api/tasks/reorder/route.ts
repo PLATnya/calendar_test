@@ -3,9 +3,6 @@ import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/mongodb";
 import { TaskModel } from "@/lib/task-model";
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
 
 export async function POST(request: Request) {
   try {

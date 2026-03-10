@@ -1,9 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { Task } from "@/core/calendar-layout";
 
-// Get current month and year for initial tasks
+// Get current year for initial tasks
 const now = new Date();
-const currentMonth = now.getMonth();
 const currentYear = now.getFullYear();
 
 // Fetch Ukraine public holidays for a given year and create immutable tasks
