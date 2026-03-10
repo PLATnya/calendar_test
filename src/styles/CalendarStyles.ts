@@ -12,7 +12,7 @@ const spin = keyframes`
 export const PageWrapper = styled.div`
   min-height: 100vh;
   padding: 12px;
-  
+
   @media (min-width: 640px) {
     padding: 16px;
   }
@@ -31,7 +31,7 @@ export const MainContainer = styled.main`
   padding: 16px;
   box-shadow: ${({ theme }) => theme.shadows.xl};
   backdrop-filter: blur(8px);
-  
+
   @media (min-width: 640px) {
     height: calc(100vh - 32px);
     padding: 24px;
@@ -72,7 +72,7 @@ export const Header = styled.div`
   flex-direction: column;
   gap: 16px;
   margin-bottom: 24px;
-  
+
   @media (min-width: 640px) {
     flex-direction: row;
     align-items: center;
@@ -84,7 +84,7 @@ export const HeaderLeft = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
-  
+
   @media (min-width: 640px) {
     flex-direction: row;
     align-items: center;
@@ -97,7 +97,7 @@ export const Title = styled.h1`
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   letter-spacing: -0.025em;
   color: ${({ theme }) => theme.colors.text.primary};
-  
+
   @media (min-width: 640px) {
     font-size: ${({ theme }) => theme.typography.fontSize['3xl']};
   }
@@ -111,13 +111,14 @@ export const FilterInput = styled.input`
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   background: ${({ theme }) => theme.colors.surface};
   outline: none;
-  transition: border-color ${({ theme }) => theme.transitions.fast},
-              box-shadow ${({ theme }) => theme.transitions.fast};
-  
+  transition:
+    border-color ${({ theme }) => theme.transitions.fast},
+    box-shadow ${({ theme }) => theme.transitions.fast};
+
   &::placeholder {
     color: ${({ theme }) => theme.colors.text.muted};
   }
-  
+
   &:focus {
     border-color: ${({ theme }) => theme.colors.accent.primary};
     box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.accent.light};
@@ -140,7 +141,7 @@ export const NavButton = styled.button`
   border: 1px solid ${({ theme }) => theme.colors.border.default};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   transition: all ${({ theme }) => theme.transitions.fast};
-  
+
   &:hover {
     border-color: ${({ theme }) => theme.colors.border.hover};
     background: ${({ theme }) => theme.colors.surfaceHover};
@@ -153,7 +154,7 @@ export const CalendarSection = styled.div`
   flex-direction: column;
   gap: 8px;
   flex: 1;
-  
+
   @media (min-width: 640px) {
     gap: 12px;
   }
@@ -163,7 +164,7 @@ export const WeekDaysGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 8px;
-  
+
   @media (min-width: 640px) {
     gap: 12px;
   }
@@ -178,7 +179,7 @@ export const WeekDayHeader = styled.div`
   color: ${({ theme }) => theme.colors.text.secondary};
   background: ${({ theme }) => theme.colors.surfaceHover};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
-  
+
   @media (min-width: 640px) {
     font-size: ${({ theme }) => theme.typography.fontSize.sm};
   }
@@ -190,7 +191,7 @@ export const DaysGrid = styled.div`
   grid-auto-rows: 1fr;
   gap: 4px;
   flex: 1;
-  
+
   @media (min-width: 640px) {
     gap: 4px;
   }
@@ -220,33 +221,46 @@ export const DayCell = styled.div<DayCellProps>`
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   transition: all ${({ theme }) => theme.transitions.fast};
   cursor: pointer;
+
+  ${({ $isToday, theme }) =>
+    $isToday &&
+    css`
+      border: 1px solid ${theme.colors.today.border};
+      background: ${theme.colors.today.background};
+      color: ${theme.colors.today.text};
+    `}
+
+  ${({ $isToday, $isDragOver, theme }) =>
+    !$isToday &&
+    $isDragOver &&
+    css`
+      border: 2px solid ${theme.colors.accent.primary};
+      background: ${theme.colors.accent.light};
+      box-shadow: 0 0 0 2px ${theme.colors.accent.light};
+    `}
   
-  ${({ $isToday, theme }) => $isToday && css`
-    border: 1px solid ${theme.colors.today.border};
-    background: ${theme.colors.today.background};
-    color: ${theme.colors.today.text};
-  `}
+  ${({ $isToday, $isDragOver, $isSelected, theme }) =>
+    !$isToday &&
+    !$isDragOver &&
+    $isSelected &&
+    css`
+      box-shadow: 0 0 0 2px ${theme.colors.accent.primary};
+    `}
   
-  ${({ $isToday, $isDragOver, theme }) => !$isToday && $isDragOver && css`
-    border: 2px solid ${theme.colors.accent.primary};
-    background: ${theme.colors.accent.light};
-    box-shadow: 0 0 0 2px ${theme.colors.accent.light};
-  `}
-  
-  ${({ $isToday, $isDragOver, $isSelected, theme }) => !$isToday && !$isDragOver && $isSelected && css`
-    box-shadow: 0 0 0 2px ${theme.colors.accent.primary};
-  `}
-  
-  ${({ $isToday, $isDragOver, $isSelected, theme }) => !$isToday && !$isDragOver && !$isSelected && css`
-    border: 1px solid ${theme.colors.border.default};
-    background: ${theme.colors.surface};
-    color: ${theme.colors.text.secondary};
-    
-    &:hover {
-      border-color: ${theme.colors.border.hover};
-      background: ${theme.colors.surfaceHover};
-    }
-  `}
+  ${({ $isToday, $isDragOver, $isSelected, theme }) =>
+    !$isToday &&
+    !$isDragOver &&
+    !$isSelected &&
+    css`
+      border: 1px solid ${theme.colors.border.default};
+      background: ${theme.colors.surface};
+      color: ${theme.colors.text.secondary};
+
+      &:hover {
+        border-color: ${theme.colors.border.hover};
+        background: ${theme.colors.surfaceHover};
+      }
+    `}
 `;
 
 export const DayButton = styled.button`
@@ -297,32 +311,37 @@ export const TaskItem = styled.div<TaskItemProps>`
   text-overflow: ellipsis;
   cursor: pointer;
   transition: background ${({ theme }) => theme.transitions.fast};
-  
-  ${({ $isMutable, theme }) => $isMutable ? css`
-    background: ${theme.colors.surfaceHover};
-    color: ${theme.colors.text.primary};
-    cursor: grab;
-    
-    &:hover {
-      background: ${theme.colors.border.default};
-    }
-    
-    &:active {
-      cursor: grabbing;
-    }
-  ` : css`
-    background: ${theme.colors.holiday.background};
-    color: ${theme.colors.holiday.text};
-    cursor: default;
-    
-    &:hover {
-      background: ${theme.colors.holiday.border}33;
-    }
-  `}
-  
-  ${({ $isDragging }) => $isDragging && css`
-    opacity: 0.5;
-  `}
+
+  ${({ $isMutable, theme }) =>
+    $isMutable
+      ? css`
+          background: ${theme.colors.surfaceHover};
+          color: ${theme.colors.text.primary};
+          cursor: grab;
+
+          &:hover {
+            background: ${theme.colors.border.default};
+          }
+
+          &:active {
+            cursor: grabbing;
+          }
+        `
+      : css`
+          background: ${theme.colors.holiday.background};
+          color: ${theme.colors.holiday.text};
+          cursor: default;
+
+          &:hover {
+            background: ${theme.colors.holiday.border}33;
+          }
+        `}
+
+  ${({ $isDragging }) =>
+    $isDragging &&
+    css`
+      opacity: 0.5;
+    `}
 `;
 
 // Task Overlay (Edit/Add forms)
@@ -348,7 +367,7 @@ export const TaskInput = styled.input`
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   background: ${({ theme }) => theme.colors.surface};
   outline: none;
-  
+
   &:focus {
     box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.accent.light};
   }
@@ -364,7 +383,7 @@ export const TaskTextArea = styled.textarea`
   background: ${({ theme }) => theme.colors.surface};
   resize: none;
   outline: none;
-  
+
   &:focus {
     box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.accent.light};
   }
@@ -384,14 +403,14 @@ export const TaskButton = styled.button<TaskButtonProps>`
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   transition: background ${({ theme }) => theme.transitions.fast};
-  
+
   ${({ $variant, theme }) => {
     switch ($variant) {
       case 'primary':
         return css`
           background: ${theme.colors.accent.primary};
           color: ${theme.colors.text.inverse};
-          
+
           &:hover {
             background: ${theme.colors.accent.hover};
           }
@@ -401,7 +420,7 @@ export const TaskButton = styled.button<TaskButtonProps>`
           background: ${theme.colors.danger};
           color: ${theme.colors.text.inverse};
           margin-left: auto;
-          
+
           &:hover {
             background: #dc2626;
           }
@@ -410,7 +429,7 @@ export const TaskButton = styled.button<TaskButtonProps>`
         return css`
           background: ${theme.colors.border.default};
           color: ${theme.colors.text.primary};
-          
+
           &:hover {
             background: ${theme.colors.border.hover};
           }
@@ -429,7 +448,7 @@ export const ModalOverlay = styled.div`
   justify-content: center;
   padding: 16px;
   background: ${({ theme }) => theme.colors.overlay};
-  
+
   @media (min-width: 640px) {
     padding: 24px;
   }
@@ -443,7 +462,7 @@ export const ModalContent = styled.section`
   border: 1px solid ${({ theme }) => theme.colors.accent.light};
   background: ${({ theme }) => theme.colors.accent.light};
   box-shadow: ${({ theme }) => theme.shadows.lg};
-  
+
   @media (min-width: 640px) {
     padding: 20px;
   }
@@ -461,7 +480,7 @@ export const ModalTitle = styled.h2`
   font-size: ${({ theme }) => theme.typography.fontSize.lg};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
-  
+
   @media (min-width: 640px) {
     font-size: ${({ theme }) => theme.typography.fontSize.xl};
   }
@@ -476,7 +495,7 @@ export const CloseButton = styled.button`
   border: 1px solid ${({ theme }) => theme.colors.accent.primary};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   transition: all ${({ theme }) => theme.transitions.fast};
-  
+
   &:hover {
     background: ${({ theme }) => theme.colors.accent.light};
   }

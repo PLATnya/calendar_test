@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect, useRef } from "react";
-import type { Task } from "@/core/calendar-layout";
+import { useState, useCallback, useEffect, useRef } from 'react';
+import type { Task } from '@/core/calendar-layout';
 
 // Get current year for initial tasks
 const now = new Date();
@@ -10,12 +10,12 @@ const fetchHolidayTasks = async (year: number): Promise<Task[]> => {
   try {
     const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/ua`);
     if (!response.ok) {
-      console.error("Failed to fetch holidays:", response.status);
+      console.error('Failed to fetch holidays:', response.status);
       return [];
     }
     const holidays = await response.json();
     return holidays.map((holiday: { date: string; localName: string; name: string }) => {
-      const [year, month, day] = holiday.date.split("-").map(Number);
+      const [year, month, day] = holiday.date.split('-').map(Number);
       return {
         id: `holiday-${holiday.date}`,
         title: holiday.localName,
@@ -28,7 +28,7 @@ const fetchHolidayTasks = async (year: number): Promise<Task[]> => {
       };
     });
   } catch (error) {
-    console.error("Error fetching holidays:", error);
+    console.error('Error fetching holidays:', error);
     return [];
   }
 };
@@ -36,35 +36,46 @@ const fetchHolidayTasks = async (year: number): Promise<Task[]> => {
 // Fetch tasks from MongoDB API
 const fetchDbTasks = async (): Promise<Task[]> => {
   try {
-    const response = await fetch("/api/tasks");
+    const response = await fetch('/api/tasks');
     if (!response.ok) {
-      console.error("Failed to fetch tasks from API:", response.status);
+      console.error('Failed to fetch tasks from API:', response.status);
       return [];
     }
     const tasks = await response.json();
     // Map _id to id for UI compatibility and convert month to 0-based
-    return tasks.map((task: { _id: string; title: string; description: string; day: number; month: number; year: number; mutable?: boolean; order?: number }) => ({
-      id: task._id,
-      title: task.title,
-      description: task.description,
-      day: task.day,
-      month: task.month - 1, // Convert to 0-based month
-      year: task.year,
-      mutable: task.mutable ?? true,
-      order: task.order ?? 0,
-    }));
+    return tasks.map(
+      (task: {
+        _id: string;
+        title: string;
+        description: string;
+        day: number;
+        month: number;
+        year: number;
+        mutable?: boolean;
+        order?: number;
+      }) => ({
+        id: task._id,
+        title: task.title,
+        description: task.description,
+        day: task.day,
+        month: task.month - 1, // Convert to 0-based month
+        year: task.year,
+        mutable: task.mutable ?? true,
+        order: task.order ?? 0,
+      })
+    );
   } catch (error) {
-    console.error("Error fetching tasks from API:", error);
+    console.error('Error fetching tasks from API:', error);
     return [];
   }
 };
 
 // Create a new task in MongoDB
-const createDbTask = async (task: Omit<Task, "id">): Promise<Task | null> => {
+const createDbTask = async (task: Omit<Task, 'id'>): Promise<Task | null> => {
   try {
-    const response = await fetch("/api/tasks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const response = await fetch('/api/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title: task.title,
         description: task.description,
@@ -75,7 +86,7 @@ const createDbTask = async (task: Omit<Task, "id">): Promise<Task | null> => {
       }),
     });
     if (!response.ok) {
-      console.error("Failed to create task:", response.status);
+      console.error('Failed to create task:', response.status);
       return null;
     }
     const createdTask = await response.json();
@@ -91,7 +102,7 @@ const createDbTask = async (task: Omit<Task, "id">): Promise<Task | null> => {
       order: createdTask.order ?? 0,
     };
   } catch (error) {
-    console.error("Error creating task:", error);
+    console.error('Error creating task:', error);
     return null;
   }
 };
@@ -100,27 +111,32 @@ const createDbTask = async (task: Omit<Task, "id">): Promise<Task | null> => {
 const updateDbTask = async (id: string, title: string, description: string): Promise<boolean> => {
   try {
     const response = await fetch(`/api/tasks/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title, description }),
     });
     if (!response.ok) {
-      console.error("Failed to update task:", response.status);
+      console.error('Failed to update task:', response.status);
       return false;
     }
     return true;
   } catch (error) {
-    console.error("Error updating task:", error);
+    console.error('Error updating task:', error);
     return false;
   }
 };
 
 // Move a task in MongoDB (update day, month, year)
-const moveDbTask = async (id: string, newDay: number, newMonth: number, newYear: number): Promise<boolean> => {
+const moveDbTask = async (
+  id: string,
+  newDay: number,
+  newMonth: number,
+  newYear: number
+): Promise<boolean> => {
   try {
     const response = await fetch(`/api/tasks/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         day: newDay,
         month: newMonth + 1, // Convert to 1-based for API
@@ -128,12 +144,12 @@ const moveDbTask = async (id: string, newDay: number, newMonth: number, newYear:
       }),
     });
     if (!response.ok) {
-      console.error("Failed to move task:", response.status);
+      console.error('Failed to move task:', response.status);
       return false;
     }
     return true;
   } catch (error) {
-    console.error("Error moving task:", error);
+    console.error('Error moving task:', error);
     return false;
   }
 };
@@ -142,15 +158,15 @@ const moveDbTask = async (id: string, newDay: number, newMonth: number, newYear:
 const deleteDbTask = async (id: string): Promise<boolean> => {
   try {
     const response = await fetch(`/api/tasks/${id}`, {
-      method: "DELETE",
+      method: 'DELETE',
     });
     if (!response.ok) {
-      console.error("Failed to delete task:", response.status);
+      console.error('Failed to delete task:', response.status);
       return false;
     }
     return true;
   } catch (error) {
-    console.error("Error deleting task:", error);
+    console.error('Error deleting task:', error);
     return false;
   }
 };
@@ -163,9 +179,9 @@ const reorderDbTasks = async (
   taskOrders: { id: string; order: number }[]
 ): Promise<boolean> => {
   try {
-    const response = await fetch("/api/tasks/reorder", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const response = await fetch('/api/tasks/reorder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         day,
         month: month + 1, // Convert to 1-based for API
@@ -174,12 +190,12 @@ const reorderDbTasks = async (
       }),
     });
     if (!response.ok) {
-      console.error("Failed to reorder tasks:", response.status);
+      console.error('Failed to reorder tasks:', response.status);
       return false;
     }
     return true;
   } catch (error) {
-    console.error("Error reordering tasks:", error);
+    console.error('Error reordering tasks:', error);
     return false;
   }
 };
@@ -191,20 +207,23 @@ export const useTasks = () => {
   const isInitialized = useRef(false);
 
   // Fetch holidays for a given year and replace immutable tasks
-  const changeYear = useCallback(async (year: number) => {
-    if (year === lastVisitedYear) return;
+  const changeYear = useCallback(
+    async (year: number) => {
+      if (year === lastVisitedYear) return;
 
-    const holidayTasks = await fetchHolidayTasks(year);
+      const holidayTasks = await fetchHolidayTasks(year);
 
-    setTasks((prev) => {
-      // Remove immutable tasks (holidays from previous year) and keep DB tasks
-      const mutableTasks = prev.filter((task) => task.mutable !== false);
-      // Add new holiday tasks for the new year
-      return [...holidayTasks, ...mutableTasks];
-    });
+      setTasks((prev) => {
+        // Remove immutable tasks (holidays from previous year) and keep DB tasks
+        const mutableTasks = prev.filter((task) => task.mutable !== false);
+        // Add new holiday tasks for the new year
+        return [...holidayTasks, ...mutableTasks];
+      });
 
-    setLastVisitedYear(year);
-  }, [lastVisitedYear]);
+      setLastVisitedYear(year);
+    },
+    [lastVisitedYear]
+  );
 
   // Initial load: fetch DB tasks and holidays
   useEffect(() => {
@@ -222,7 +241,7 @@ export const useTasks = () => {
         // Combine holiday tasks (immutable) with DB tasks (mutable)
         setTasks([...holidayTasks, ...dbTasks]);
       } catch (error) {
-        console.error("Error initializing tasks:", error);
+        console.error('Error initializing tasks:', error);
         // Fallback to just holidays if DB fails
         const holidayTasks = await fetchHolidayTasks(currentYear);
         setTasks(holidayTasks);
@@ -243,8 +262,8 @@ export const useTasks = () => {
       const newOrder = maxOrder + 1;
 
       const newTask: Task = {
-        id: "", // Will be set after API response
-        title: title.trim() || "Untitled",
+        id: '', // Will be set after API response
+        title: title.trim() || 'Untitled',
         description: description.trim(),
         day,
         month,
@@ -262,9 +281,7 @@ export const useTasks = () => {
       const createdTask = await createDbTask(newTask);
       if (createdTask) {
         // Replace optimistic task with actual task from DB
-        setTasks((prev) =>
-          prev.map((t) => (t.id === tempId ? createdTask : t))
-        );
+        setTasks((prev) => prev.map((t) => (t.id === tempId ? createdTask : t)));
         return createdTask;
       } else {
         // Remove optimistic task if API failed
@@ -275,57 +292,64 @@ export const useTasks = () => {
     [tasks]
   );
 
-  const updateTask = useCallback(async (id: string, title: string, description: string) => {
-    // Skip immutable tasks
-    const task = tasks.find((t) => t.id === id);
-    if (!task || task.mutable === false) return;
+  const updateTask = useCallback(
+    async (id: string, title: string, description: string) => {
+      // Skip immutable tasks
+      const task = tasks.find((t) => t.id === id);
+      if (!task || task.mutable === false) return;
 
-    // Optimistic update
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === id
-          ? { ...t, title: title.trim() || "Untitled", description: description.trim() }
-          : t
-      )
-    );
+      // Optimistic update
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === id
+            ? { ...t, title: title.trim() || 'Untitled', description: description.trim() }
+            : t
+        )
+      );
 
-    // Call API (skip for holiday tasks)
-    if (!id.startsWith("holiday-")) {
-      await updateDbTask(id, title, description);
-    }
-  }, [tasks]);
+      // Call API (skip for holiday tasks)
+      if (!id.startsWith('holiday-')) {
+        await updateDbTask(id, title, description);
+      }
+    },
+    [tasks]
+  );
 
-  const deleteTask = useCallback(async (id: string) => {
-    // Skip immutable tasks
-    const task = tasks.find((t) => t.id === id);
-    if (!task || task.mutable === false) return;
+  const deleteTask = useCallback(
+    async (id: string) => {
+      // Skip immutable tasks
+      const task = tasks.find((t) => t.id === id);
+      if (!task || task.mutable === false) return;
 
-    // Optimistic delete
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+      // Optimistic delete
+      setTasks((prev) => prev.filter((t) => t.id !== id));
 
-    // Call API (skip for holiday tasks)
-    if (!id.startsWith("holiday-")) {
-      await deleteDbTask(id);
-    }
-  }, [tasks]);
+      // Call API (skip for holiday tasks)
+      if (!id.startsWith('holiday-')) {
+        await deleteDbTask(id);
+      }
+    },
+    [tasks]
+  );
 
-  const moveTask = useCallback(async (id: string, newDay: number, newMonth: number, newYear: number) => {
-    // Skip immutable tasks
-    const task = tasks.find((t) => t.id === id);
-    if (!task || task.mutable === false) return;
+  const moveTask = useCallback(
+    async (id: string, newDay: number, newMonth: number, newYear: number) => {
+      // Skip immutable tasks
+      const task = tasks.find((t) => t.id === id);
+      if (!task || task.mutable === false) return;
 
-    // Optimistic update
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === id ? { ...t, day: newDay, month: newMonth, year: newYear } : t
-      )
-    );
+      // Optimistic update
+      setTasks((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, day: newDay, month: newMonth, year: newYear } : t))
+      );
 
-    // Call API (skip for holiday tasks)
-    if (!id.startsWith("holiday-")) {
-      await moveDbTask(id, newDay, newMonth, newYear);
-    }
-  }, [tasks]);
+      // Call API (skip for holiday tasks)
+      if (!id.startsWith('holiday-')) {
+        await moveDbTask(id, newDay, newMonth, newYear);
+      }
+    },
+    [tasks]
+  );
 
   const reorderTasks = useCallback(
     async (day: number, month: number, year: number, fromIndex: number, toIndex: number) => {
@@ -334,12 +358,16 @@ export const useTasks = () => {
         (task) => task.day === day && task.month === month && task.year === year
       );
       const mutableDayTasks = dayTasks.filter((task) => task.mutable !== false);
-      
+
       if (mutableDayTasks.length === 0) return;
 
       // Validate indices are within bounds
-      if (fromIndex < 0 || fromIndex >= mutableDayTasks.length ||
-          toIndex < 0 || toIndex >= mutableDayTasks.length) {
+      if (
+        fromIndex < 0 ||
+        fromIndex >= mutableDayTasks.length ||
+        toIndex < 0 ||
+        toIndex >= mutableDayTasks.length
+      ) {
         return;
       }
 
@@ -363,7 +391,7 @@ export const useTasks = () => {
 
       // Persist to database (skip for holiday tasks)
       const taskOrders = reorderedDayTasks
-        .filter((task) => !task.id.startsWith("holiday-"))
+        .filter((task) => !task.id.startsWith('holiday-'))
         .map((task, index) => ({ id: task.id, order: index }));
 
       if (taskOrders.length > 0) {
@@ -374,7 +402,8 @@ export const useTasks = () => {
   );
 
   const getTasksForDay = useCallback(
-    (day: number, month: number, year: number) => tasks.filter((task) => task.day === day && task.month === month && task.year === year),
+    (day: number, month: number, year: number) =>
+      tasks.filter((task) => task.day === day && task.month === month && task.year === year),
     [tasks]
   );
 

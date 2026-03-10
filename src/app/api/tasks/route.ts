@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/mongodb";
-import { TaskModel } from "@/lib/task-model";
+import { NextResponse } from 'next/server';
+import { connectToDatabase } from '@/lib/mongodb';
+import { TaskModel } from '@/lib/task-model';
 
 export async function GET() {
   try {
@@ -13,8 +13,8 @@ export async function GET() {
     }));
     return NextResponse.json(tasksWithStringIds);
   } catch (error) {
-    console.error("Error fetching tasks:", error);
-    return NextResponse.json({ error: "Failed to fetch tasks" }, { status: 500 });
+    console.error('Error fetching tasks:', error);
+    return NextResponse.json({ error: 'Failed to fetch tasks' }, { status: 500 });
   }
 }
 
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
     if (!title || day === undefined || month === undefined || year === undefined) {
       return NextResponse.json(
-        { error: "Missing required fields: title, day, month, year" },
+        { error: 'Missing required fields: title, day, month, year' },
         { status: 400 }
       );
     }
@@ -33,7 +33,10 @@ export async function POST(request: Request) {
     // Validate date ranges with proper date validation
     if (month < 1 || month > 12 || day < 1 || day > 31 || year < 1900 || year > 2100) {
       return NextResponse.json(
-        { error: "Invalid date values. Month must be 1-12, Day must be 1-31, Year must be 1900-2100" },
+        {
+          error:
+            'Invalid date values. Month must be 1-12, Day must be 1-31, Year must be 1900-2100',
+        },
         { status: 400 }
       );
     }
@@ -42,7 +45,7 @@ export async function POST(request: Request) {
     const date = new Date(year, month - 1, day);
     if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
       return NextResponse.json(
-        { error: "Invalid date. The specified day does not exist in this month." },
+        { error: 'Invalid date. The specified day does not exist in this month.' },
         { status: 400 }
       );
     }
@@ -54,14 +57,14 @@ export async function POST(request: Request) {
     // provides the safety net against true duplicates.
     const lastTask = await TaskModel.findOne({ day, month, year })
       .sort({ order: -1 })
-      .select("order")
+      .select('order')
       .lean();
-    
+
     const newOrder = lastTask && lastTask.order !== undefined ? lastTask.order + 1 : 0;
 
     const newTask = await TaskModel.create({
-      title: title.trim() || "Untitled",
-      description: description?.trim() || "",
+      title: title.trim() || 'Untitled',
+      description: description?.trim() || '',
       day,
       month,
       year,
@@ -79,10 +82,13 @@ export async function POST(request: Request) {
   } catch (error) {
     // Handle duplicate key error (race condition)
     if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
-      console.error("Duplicate order detected");
-      return NextResponse.json({ error: "Concurrent task creation detected. Please retry." }, { status: 409 });
+      console.error('Duplicate order detected');
+      return NextResponse.json(
+        { error: 'Concurrent task creation detected. Please retry.' },
+        { status: 409 }
+      );
     }
-    console.error("Error creating task:", error);
-    return NextResponse.json({ error: "Failed to create task" }, { status: 500 });
+    console.error('Error creating task:', error);
+    return NextResponse.json({ error: 'Failed to create task' }, { status: 500 });
   }
 }

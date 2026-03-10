@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect, useMemo } from "react";
-import { useCalendarLayout } from "./calendar-layout-hook";
-import { useTasks } from "./tasks-hook";
-import type { Task } from "@/core/calendar-layout";
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { useCalendarLayout } from './calendar-layout-hook';
+import { useTasks } from './tasks-hook';
+import type { Task } from '@/core/calendar-layout';
 import {
   PageWrapper,
   MainContainer,
@@ -38,7 +38,7 @@ import {
   ModalHeader,
   ModalTitle,
   CloseButton,
-} from "@/styles/CalendarStyles";
+} from '@/styles/CalendarStyles';
 
 type EditingTask = {
   task: Task;
@@ -52,16 +52,34 @@ type AddingTask = {
 } | null;
 
 export default function Home() {
-  const { tasks, isLoading, lastVisitedYear, changeYear, addTask, updateTask, deleteTask, moveTask, reorderTasks } = useTasks();
-  const [filterText, setFilterText] = useState("");
-  const filteredTasks = useMemo(() =>
-    filterText
-      ? tasks.filter((task) => task.title.toLowerCase().includes(filterText.toLowerCase()))
-      : tasks,
+  const {
+    tasks,
+    isLoading,
+    lastVisitedYear,
+    changeYear,
+    addTask,
+    updateTask,
+    deleteTask,
+    moveTask,
+    reorderTasks,
+  } = useTasks();
+  const [filterText, setFilterText] = useState('');
+  const filteredTasks = useMemo(
+    () =>
+      filterText
+        ? tasks.filter((task) => task.title.toLowerCase().includes(filterText.toLowerCase()))
+        : tasks,
     [tasks, filterText]
   );
-  const { weekDays, monthLabel, cells, currentMonth, currentYear, goToPreviousMonth, goToNextMonth } =
-    useCalendarLayout(filteredTasks);
+  const {
+    weekDays,
+    monthLabel,
+    cells,
+    currentMonth,
+    currentYear,
+    goToPreviousMonth,
+    goToNextMonth,
+  } = useCalendarLayout(filteredTasks);
 
   // Fetch holidays when year changes
   useEffect(() => {
@@ -69,24 +87,23 @@ export default function Home() {
       changeYear(currentYear);
     }
   }, [currentYear, lastVisitedYear, changeYear]);
-  
+
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [editingTask, setEditingTask] = useState<EditingTask>(null);
   const [addingTask, setAddingTask] = useState<AddingTask>(null);
-  const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskDescription, setNewTaskDescription] = useState("");
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDescription, setNewTaskDescription] = useState('');
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [dragOverDay, setDragOverDay] = useState<number | null>(null);
-  
+
   const taskRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
-
-  const closeAll = () =>{
+  const closeAll = () => {
     taskRefs.current.clear();
     setSelectedDay(null);
     setEditingTask(null);
     setAddingTask(null);
-  }
+  };
   const handleGoToPreviousMonth = () => {
     closeAll();
     goToPreviousMonth();
@@ -111,8 +128,8 @@ export default function Home() {
         },
       });
     }
-    setNewTaskTitle("");
-    setNewTaskDescription("");
+    setNewTaskTitle('');
+    setNewTaskDescription('');
   };
 
   const handleSaveNewTask = () => {
@@ -120,20 +137,20 @@ export default function Home() {
       addTask(addingTask.day, currentMonth, currentYear, newTaskTitle, newTaskDescription);
     }
     setAddingTask(null);
-    setNewTaskTitle("");
-    setNewTaskDescription("");
+    setNewTaskTitle('');
+    setNewTaskDescription('');
   };
 
   const handleCancelAddTask = () => {
     setAddingTask(null);
-    setNewTaskTitle("");
-    setNewTaskDescription("");
+    setNewTaskTitle('');
+    setNewTaskDescription('');
   };
 
   const handleStartEditTask = (task: Task, day: number) => {
     // Don't allow editing immutable tasks
     if (task.mutable === false) return;
-    
+
     const taskElement = taskRefs.current.get(task.id);
     if (taskElement) {
       const rect = taskElement.getBoundingClientRect();
@@ -159,13 +176,14 @@ export default function Home() {
         setEditingTask(null);
         return;
       }
-      
+
       // Only update if there are actual changes
-      const originalTask = tasks.find(t => t.id === editingTask.task.id);
-      const hasChanges = !originalTask || 
-        originalTask.title !== editingTask.task.title || 
+      const originalTask = tasks.find((t) => t.id === editingTask.task.id);
+      const hasChanges =
+        !originalTask ||
+        originalTask.title !== editingTask.task.title ||
         originalTask.description !== editingTask.task.description;
-      
+
       if (hasChanges) {
         updateTask(editingTask.task.id, editingTask.task.title, editingTask.task.description);
       }
@@ -192,20 +210,20 @@ export default function Home() {
   // Drag and Drop handlers
   const handleDragStart = (e: React.DragEvent, task: Task) => {
     setDraggedTask(task);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", task.id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', task.id);
   };
 
   const handleDragOverTask = (e: React.DragEvent, day: number) => {
     e.preventDefault();
     e.stopPropagation();
-    e.dataTransfer.dropEffect = "move";
+    e.dataTransfer.dropEffect = 'move';
     setDragOverDay(day);
   };
 
   const handleDragOver = (e: React.DragEvent, day: number) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
+    e.dataTransfer.dropEffect = 'move';
     setDragOverDay(day);
   };
 
@@ -216,13 +234,15 @@ export default function Home() {
   const handleDrop = (e: React.DragEvent, targetDay: number, targetIndex?: number) => {
     e.preventDefault();
     setDragOverDay(null);
-    
+
     if (!draggedTask) return;
-    
+
     // Determine if this is a reorder (same day) or move (different day)
     if (draggedTask.day === targetDay && targetIndex !== undefined) {
-      const currentTasks = tasks.filter(t => t.day === targetDay && t.month === currentMonth && t.year === currentYear);
-      const currentIndex = currentTasks.findIndex(t => t.id === draggedTask.id);
+      const currentTasks = tasks.filter(
+        (t) => t.day === targetDay && t.month === currentMonth && t.year === currentYear
+      );
+      const currentIndex = currentTasks.findIndex((t) => t.id === draggedTask.id);
       if (currentIndex !== -1 && currentIndex !== targetIndex) {
         reorderTasks(targetDay, currentMonth, currentYear, currentIndex, targetIndex);
       }
@@ -264,7 +284,7 @@ export default function Home() {
             </LoadingContainer>
           </LoadingOverlay>
         )}
-        
+
         <Header>
           <HeaderLeft>
             <Title>{monthLabel}</Title>
@@ -277,16 +297,10 @@ export default function Home() {
           </HeaderLeft>
 
           <HeaderRight>
-            <NavButton
-              type="button"
-              onClick={handleGoToPreviousMonth}
-            >
+            <NavButton type="button" onClick={handleGoToPreviousMonth}>
               Previous
             </NavButton>
-            <NavButton
-              type="button"
-              onClick={handleGoToNextMonth}
-            >
+            <NavButton type="button" onClick={handleGoToNextMonth}>
               Next
             </NavButton>
           </HeaderRight>
@@ -295,18 +309,14 @@ export default function Home() {
         <CalendarSection>
           <WeekDaysGrid>
             {weekDays.map((weekDay) => (
-              <WeekDayHeader key={weekDay}>
-                {weekDay}
-              </WeekDayHeader>
+              <WeekDayHeader key={weekDay}>{weekDay}</WeekDayHeader>
             ))}
           </WeekDaysGrid>
 
           <DaysGrid>
             {cells.map((cell) =>
-              cell.type === "empty" ? (
-                <EmptyCell
-                  key={cell.key}
-                />
+              cell.type === 'empty' ? (
+                <EmptyCell key={cell.key} />
               ) : (
                 <DayCell
                   key={cell.key}
@@ -326,10 +336,10 @@ export default function Home() {
                   >
                     {cell.day}
                   </DayButton>
-                  
+
                   {/* Tasks list */}
                   <TasksContainer>
-                    <TasksList 
+                    <TasksList
                       onClick={(e) => {
                         if (e.target !== e.currentTarget) return;
                         handleStartAddTask(cell.day, e);
@@ -352,7 +362,7 @@ export default function Home() {
                             onClick={() => handleStartEditTask(task, cell.day)}
                             $isMutable={isMutable}
                             $isDragging={draggedTask?.id === task.id}
-                            title={`${task.title}${task.description ? `\n${task.description}` : ""}`}
+                            title={`${task.title}${task.description ? `\n${task.description}` : ''}`}
                           >
                             {task.title}
                           </TaskItem>
@@ -396,21 +406,11 @@ export default function Home() {
                           rows={2}
                         />
                         <TaskButtonGroup>
-                          <TaskButton
-                            onClick={handleSaveEditTask}
-                            $variant="primary"
-                          >
+                          <TaskButton onClick={handleSaveEditTask} $variant="primary">
                             Save
                           </TaskButton>
-                          <TaskButton
-                            onClick={handleCancelEditTask}
-                          >
-                            Cancel
-                          </TaskButton>
-                          <TaskButton
-                            onClick={handleDeleteTask}
-                            $variant="danger"
-                          >
+                          <TaskButton onClick={handleCancelEditTask}>Cancel</TaskButton>
+                          <TaskButton onClick={handleDeleteTask} $variant="danger">
                             Delete
                           </TaskButton>
                         </TaskButtonGroup>
@@ -443,23 +443,16 @@ export default function Home() {
                           rows={2}
                         />
                         <TaskButtonGroup>
-                          <TaskButton
-                            onClick={handleSaveNewTask}
-                            $variant="primary"
-                          >
+                          <TaskButton onClick={handleSaveNewTask} $variant="primary">
                             Add
                           </TaskButton>
-                          <TaskButton
-                            onClick={handleCancelAddTask}
-                          >
-                            Cancel
-                          </TaskButton>
+                          <TaskButton onClick={handleCancelAddTask}>Cancel</TaskButton>
                         </TaskButtonGroup>
                       </TaskForm>
                     </TaskOverlay>
                   )}
                 </DayCell>
-              ),
+              )
             )}
           </DaysGrid>
         </CalendarSection>
@@ -471,10 +464,7 @@ export default function Home() {
                 <ModalTitle>
                   {selectedDay} {monthLabel}
                 </ModalTitle>
-                <CloseButton
-                  type="button"
-                  onClick={() => setSelectedDay(null)}
-                >
+                <CloseButton type="button" onClick={() => setSelectedDay(null)}>
                   Close
                 </CloseButton>
               </ModalHeader>

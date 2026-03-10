@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ITask extends Document {
   title: string;
@@ -12,7 +12,7 @@ export interface ITask extends Document {
 
 const taskSchemaDefinition = {
   title: { type: String, required: true },
-  description: { type: String, default: "" },
+  description: { type: String, default: '' },
   day: { type: Number, required: true },
   month: { type: Number, required: true },
   year: { type: Number, required: true },
@@ -29,4 +29,4 @@ TaskSchema.index({ year: 1, month: 1, day: 1 });
 // Add index for ordering within a day
 TaskSchema.index({ year: 1, month: 1, day: 1, order: 1 });
 
-export const TaskModel = mongoose.models.Task || mongoose.model<ITask>("Task", TaskSchema);
+export const TaskModel = mongoose.models.Task || mongoose.model<ITask>('Task', TaskSchema);
