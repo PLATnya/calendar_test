@@ -2,9 +2,8 @@ export const theme = {
   colors: {
     // Primary palette - minimalistic neutral tones
     background: '#fafafa',
-    surface: '#ffffff',
-    surfaceHover: '#f5f5f5',
-    
+    surface: '#00000015',
+    surfaceHover: '#0000003a',
     // Text colors
     text: {
       primary: '#18181b',
@@ -28,6 +27,12 @@ export const theme = {
       hover: '#0284c7',
     },
     
+    task: {
+      background: '#ffedd5',
+      hover: '#ffffff63',
+      text: '#000000',
+    },
+
     // Semantic colors
     today: {
       background: '#ffedd5',
@@ -37,7 +42,7 @@ export const theme = {
     
     holiday: {
       background: '#fce7f3',
-      border: '#f472b6',
+      hover: '#f472b53f',
       text: '#9d174d',
     },
     
@@ -72,7 +77,7 @@ export const theme = {
     sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
     md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
     lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)',
-    xl: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+    xl: '0 25px 30px -8px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.17)',
   },
   
   typography: {

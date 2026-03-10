@@ -303,24 +303,24 @@ interface TaskItemProps {
 }
 
 export const TaskItem = styled.div<TaskItemProps>`
-  padding: 2px 6px;
-  font-size: ${({ theme }) => theme.typography.fontSize.xs};
-  border-radius: ${({ theme }) => theme.borderRadius.sm};
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding: 8px 12px;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  border-radius: 0;
+  box-shadow: ${({ theme }) => theme.shadows.xl};
+  word-wrap: break-word;
+  overflow-wrap: break-word;
   cursor: pointer;
   transition: background ${({ theme }) => theme.transitions.fast};
 
   ${({ $isMutable, theme }) =>
     $isMutable
       ? css`
-          background: ${theme.colors.surfaceHover};
-          color: ${theme.colors.text.primary};
+          background: ${theme.colors.task.background};
+          color: ${theme.colors.task.text};
           cursor: grab;
 
           &:hover {
-            background: ${theme.colors.border.default};
+            background: ${theme.colors.task.hover};
           }
 
           &:active {
@@ -331,9 +331,9 @@ export const TaskItem = styled.div<TaskItemProps>`
           background: ${theme.colors.holiday.background};
           color: ${theme.colors.holiday.text};
           cursor: default;
-
+          border: 1px dashed #000000;
           &:hover {
-            background: ${theme.colors.holiday.border}33;
+            background: ${theme.colors.holiday.hover};
           }
         `}
 
