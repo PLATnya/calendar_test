@@ -351,40 +351,43 @@ export const TaskOverlay = styled.div`
 `;
 
 export const TaskForm = styled.div`
-  padding: 8px;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  border: 1px solid ${({ theme }) => theme.colors.accent.primary};
-  background: ${({ theme }) => theme.colors.accent.light};
-  box-shadow: ${({ theme }) => theme.shadows.lg};
+  padding: 8px 12px;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  border: 1px solid ${({ theme }) => theme.colors.border.default};
+  background: ${({ theme }) => theme.colors.task.background};
+  color: ${({ theme }) => theme.colors.task.text};
+  box-shadow: ${({ theme }) => theme.shadows.xl};
 `;
 
 export const TaskInput = styled.input`
   width: 100%;
-  padding: 2px 4px;
+  padding: 4px 6px;
   margin-bottom: 4px;
-  font-size: ${({ theme }) => theme.typography.fontSize.xs};
-  border: 1px solid ${({ theme }) => theme.colors.accent.primary};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  border: 1px solid ${({ theme }) => theme.colors.border.default};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
-  background: ${({ theme }) => theme.colors.surface};
+  color: ${({ theme }) => theme.colors.text.primary};
   outline: none;
 
   &:focus {
+    border-color: ${({ theme }) => theme.colors.accent.primary};
     box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.accent.light};
   }
 `;
 
 export const TaskTextArea = styled.textarea`
   width: 100%;
-  padding: 2px 4px;
+  padding: 4px 6px;
   margin-bottom: 4px;
-  font-size: ${({ theme }) => theme.typography.fontSize.xs};
-  border: 1px solid ${({ theme }) => theme.colors.accent.primary};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  border: 1px solid ${({ theme }) => theme.colors.border.default};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
-  background: ${({ theme }) => theme.colors.surface};
+  color: ${({ theme }) => theme.colors.text.primary};
   resize: none;
   outline: none;
 
   &:focus {
+    border-color: ${({ theme }) => theme.colors.accent.primary};
     box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.accent.light};
   }
 `;
@@ -399,10 +402,10 @@ interface TaskButtonProps {
 }
 
 export const TaskButton = styled.button<TaskButtonProps>`
-  padding: 2px 4px;
+  padding: 4px 8px;
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
-  transition: background ${({ theme }) => theme.transitions.fast};
+  transition: all ${({ theme }) => theme.transitions.fast};
 
   ${({ $variant, theme }) => {
     switch ($variant) {
@@ -410,28 +413,34 @@ export const TaskButton = styled.button<TaskButtonProps>`
         return css`
           background: ${theme.colors.accent.primary};
           color: ${theme.colors.text.inverse};
+          border: 1px solid ${theme.colors.accent.primary};
 
           &:hover {
             background: ${theme.colors.accent.hover};
+            border-color: ${theme.colors.accent.hover};
           }
         `;
       case 'danger':
         return css`
           background: ${theme.colors.danger};
           color: ${theme.colors.text.inverse};
+          border: 1px solid ${theme.colors.danger};
           margin-left: auto;
 
           &:hover {
             background: #dc2626;
+            border-color: #dc2626;
           }
         `;
       default:
         return css`
-          background: ${theme.colors.border.default};
+          background: ${theme.colors.surface};
           color: ${theme.colors.text.primary};
+          border: 1px solid ${theme.colors.border.default};
 
           &:hover {
-            background: ${theme.colors.border.hover};
+            background: ${theme.colors.surfaceHover};
+            border-color: ${theme.colors.border.hover};
           }
         `;
     }

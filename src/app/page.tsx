@@ -381,7 +381,14 @@ export default function Home() {
                         width: editingTask.position.width,
                       }}
                     >
-                      <TaskForm>
+                      <TaskForm
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSaveEditTask();
+                          }
+                        }}
+                      >
                         <TaskInput
                           type="text"
                           value={editingTask.task.title}
@@ -409,7 +416,6 @@ export default function Home() {
                           <TaskButton onClick={handleSaveEditTask} $variant="primary">
                             Save
                           </TaskButton>
-                          <TaskButton onClick={handleCancelEditTask}>Cancel</TaskButton>
                           <TaskButton onClick={handleDeleteTask} $variant="danger">
                             Delete
                           </TaskButton>
@@ -428,7 +434,14 @@ export default function Home() {
                         width: addingTask.position.width,
                       }}
                     >
-                      <TaskForm>
+                      <TaskForm
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSaveNewTask();
+                          }
+                        }}
+                      >
                         <TaskInput
                           type="text"
                           value={newTaskTitle}
@@ -446,7 +459,6 @@ export default function Home() {
                           <TaskButton onClick={handleSaveNewTask} $variant="primary">
                             Add
                           </TaskButton>
-                          <TaskButton onClick={handleCancelAddTask}>Cancel</TaskButton>
                         </TaskButtonGroup>
                       </TaskForm>
                     </TaskOverlay>
