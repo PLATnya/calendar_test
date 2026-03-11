@@ -97,6 +97,7 @@ export default function Home() {
   const [dragOverDay, setDragOverDay] = useState<number | null>(null);
 
   const taskRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const daysGridRef = useRef<HTMLDivElement>(null);
 
   const closeAll = () => {
     taskRefs.current.clear();
@@ -117,13 +118,13 @@ export default function Home() {
   const handleStartAddTask = (day: number, e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     const rect = target.getBoundingClientRect();
-    const parentRect = target.offsetParent?.getBoundingClientRect();
-    if (parentRect) {
+    const gridRect = daysGridRef.current?.getBoundingClientRect();
+    if (gridRect) {
       setAddingTask({
         day,
         position: {
-          top: e.clientY - parentRect.top,
-          left: rect.left - parentRect.left,
+          top: e.clientY - gridRect.top,
+          left: rect.left - gridRect.left,
           width: rect.width,
         },
       });
@@ -147,21 +148,21 @@ export default function Home() {
     setNewTaskDescription('');
   };
 
-  const handleStartEditTask = (task: Task, day: number) => {
+  const handleStartEditTask = (task: Task, day: number, e: React.MouseEvent) => {
     // Don't allow editing immutable tasks
     if (task.mutable === false) return;
 
     const taskElement = taskRefs.current.get(task.id);
     if (taskElement) {
       const rect = taskElement.getBoundingClientRect();
-      const parentRect = taskElement.offsetParent?.getBoundingClientRect();
-      if (parentRect) {
+      const gridRect = daysGridRef.current?.getBoundingClientRect();
+      if (gridRect) {
         setEditingTask({
           task,
           day,
           position: {
-            top: rect.top - parentRect.top,
-            left: rect.left - parentRect.left,
+            top: rect.top - gridRect.top,
+            left: rect.left - gridRect.left,
             width: rect.width,
           },
         });
@@ -313,7 +314,7 @@ export default function Home() {
             ))}
           </WeekDaysGrid>
 
-          <DaysGrid>
+          <DaysGrid ref={daysGridRef}>
             {cells.map((cell) =>
               cell.type === 'empty' ? (
                 <EmptyCell key={cell.key} />
@@ -326,6 +327,10 @@ export default function Home() {
                   onDragOver={(e) => handleDragOver(e, cell.day)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, cell.day)}
+                  onClick={(e) => {
+                    if (e.target !== e.currentTarget) return;
+                    handleStartAddTask(cell.day, e);
+                  }}
                 >
                   <DayButton
                     type="button"
@@ -339,12 +344,7 @@ export default function Home() {
 
                   {/* Tasks list */}
                   <TasksContainer>
-                    <TasksList
-                      onClick={(e) => {
-                        if (e.target !== e.currentTarget) return;
-                        handleStartAddTask(cell.day, e);
-                      }}
-                    >
+                    <TasksList>
                       {cell.tasks.map((task, index) => {
                         const isMutable = task.mutable ?? true;
                         return (
@@ -359,7 +359,7 @@ export default function Home() {
                             onDragEnd={handleDragEnd}
                             onDragOver={(e) => handleDragOverTask(e, cell.day)}
                             onDrop={(e) => handleDrop(e, cell.day, index)}
-                            onClick={() => handleStartEditTask(task, cell.day)}
+                            onClick={(e) => handleStartEditTask(task, cell.day, e)}
                             $isMutable={isMutable}
                             $isDragging={draggedTask?.id === task.id}
                             title={`${task.title}${task.description ? `\n${task.description}` : ''}`}
@@ -370,103 +370,105 @@ export default function Home() {
                       })}
                     </TasksList>
                   </TasksContainer>
-
-                  {/* Edit overlay - positioned at task location */}
-                  {editingTask?.day === cell.day && (
-                    <TaskOverlay
-                      className="task-edit-overlay"
-                      style={{
-                        top: editingTask.position.top,
-                        left: editingTask.position.left,
-                        width: editingTask.position.width,
-                      }}
-                    >
-                      <TaskForm
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSaveEditTask();
-                          }
-                        }}
-                      >
-                        <TaskInput
-                          type="text"
-                          value={editingTask.task.title}
-                          onChange={(e) =>
-                            setEditingTask({
-                              ...editingTask,
-                              task: { ...editingTask.task, title: e.target.value },
-                            })
-                          }
-                          placeholder="Task title"
-                          autoFocus
-                        />
-                        <TaskTextArea
-                          value={editingTask.task.description}
-                          onChange={(e) =>
-                            setEditingTask({
-                              ...editingTask,
-                              task: { ...editingTask.task, description: e.target.value },
-                            })
-                          }
-                          placeholder="Description (optional)"
-                          rows={2}
-                        />
-                        <TaskButtonGroup>
-                          <TaskButton onClick={handleSaveEditTask} $variant="primary">
-                            Save
-                          </TaskButton>
-                          <TaskButton onClick={handleDeleteTask} $variant="danger">
-                            Delete
-                          </TaskButton>
-                        </TaskButtonGroup>
-                      </TaskForm>
-                    </TaskOverlay>
-                  )}
-
-                  {/* Add task overlay */}
-                  {!editingTask && addingTask?.day === cell.day && (
-                    <TaskOverlay
-                      className="task-add-overlay"
-                      style={{
-                        top: addingTask.position.top,
-                        left: addingTask.position.left,
-                        width: addingTask.position.width,
-                      }}
-                    >
-                      <TaskForm
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSaveNewTask();
-                          }
-                        }}
-                      >
-                        <TaskInput
-                          type="text"
-                          value={newTaskTitle}
-                          onChange={(e) => setNewTaskTitle(e.target.value)}
-                          placeholder="Task title"
-                          autoFocus
-                        />
-                        <TaskTextArea
-                          value={newTaskDescription}
-                          onChange={(e) => setNewTaskDescription(e.target.value)}
-                          placeholder="Description (optional)"
-                          rows={2}
-                        />
-                        <TaskButtonGroup>
-                          <TaskButton onClick={handleSaveNewTask} $variant="primary">
-                            Add
-                          </TaskButton>
-                        </TaskButtonGroup>
-                      </TaskForm>
-                    </TaskOverlay>
-                  )}
                 </DayCell>
               )
             )}
+            {/* Task overlays rendered at DaysGrid level to appear above any day cell */}
+            {editingTask && (
+              <TaskOverlay
+                className="task-edit-overlay"
+                style={{
+                  top: editingTask.position.top,
+                  left: editingTask.position.left,
+                  width: editingTask.position.width,
+                }}
+              >
+                <TaskForm
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSaveEditTask();
+                    }
+                  }}
+                >
+                  <TaskInput
+                    type="text"
+                    value={editingTask.task.title}
+                    onChange={(e) =>
+                      setEditingTask({
+                        ...editingTask,
+                        task: { ...editingTask.task, title: e.target.value },
+                      })
+                    }
+                    placeholder="Task title"
+                    autoFocus
+                  />
+                  <TaskTextArea
+                    value={editingTask.task.description}
+                    onChange={(e) =>
+                      setEditingTask({
+                        ...editingTask,
+                        task: { ...editingTask.task, description: e.target.value },
+                      })
+                    }
+                    placeholder="Description (optional)"
+                    rows={2}
+                  />
+                  <TaskButtonGroup>
+                    <TaskButton onClick={handleSaveEditTask} $variant="primary">
+                      Save
+                    </TaskButton>
+                    <TaskButton onClick={handleDeleteTask} $variant="danger">
+                      Delete
+                    </TaskButton>
+                  </TaskButtonGroup>
+                </TaskForm>
+              </TaskOverlay>
+            )}
+            
+            {/* Add task overlay */}
+            {addingTask && (
+              <TaskOverlay
+                className="task-add-overlay"
+                style={{
+                  top: addingTask.position.top,
+                  left: addingTask.position.left,
+                  width: addingTask.position.width,
+                }}
+              >
+                <TaskForm
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSaveNewTask();
+                    }
+                  }}
+                >
+                  <TaskInput
+                    type="text"
+                    value={newTaskTitle}
+                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                    placeholder="Task title"
+                    autoFocus
+                  />
+                  <TaskTextArea
+                    value={newTaskDescription}
+                    onChange={(e) => setNewTaskDescription(e.target.value)}
+                    placeholder="Description (optional)"
+                    rows={2}
+                  />
+                  <TaskButtonGroup>
+                    <TaskButton onClick={handleSaveNewTask} $variant="primary">
+                      Add
+                    </TaskButton>
+                  </TaskButtonGroup>
+                </TaskForm>
+              </TaskOverlay>
+            )}
           </DaysGrid>
+
+          
+
         </CalendarSection>
 
         {selectedDay !== null && (

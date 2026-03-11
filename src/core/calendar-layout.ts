@@ -64,17 +64,9 @@ export const getCalendarLayout = (
     };
   });
 
-  const totalCells = leadingEmptyCells.length + dayCells.length;
-  const trailingEmptyCellCount = (7 - (totalCells % 7)) % 7;
-
-  const trailingEmptyCells = Array.from({ length: trailingEmptyCellCount }, (_, index) => ({
-    type: 'empty' as const,
-    key: `trailing-${index}`,
-  }));
-
   return {
     weekDays: [...WEEK_DAYS],
     monthLabel: formatMonthYear(new Date(year, zeroBasedMonth, 1)),
-    cells: [...leadingEmptyCells, ...dayCells, ...trailingEmptyCells],
+    cells: [...leadingEmptyCells, ...dayCells],
   };
 };

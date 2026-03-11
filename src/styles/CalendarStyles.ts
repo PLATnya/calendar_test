@@ -23,7 +23,6 @@ export const MainContainer = styled.main`
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 24px);
   width: 100%;
   border-radius: 24px;
   border: 1px solid ${({ theme }) => theme.colors.border.default};
@@ -31,7 +30,7 @@ export const MainContainer = styled.main`
   padding: 16px;
   box-shadow: ${({ theme }) => theme.shadows.xl};
   backdrop-filter: blur(8px);
-
+  overflow: scroll;
   @media (min-width: 640px) {
     height: calc(100vh - 32px);
     padding: 24px;
@@ -191,7 +190,9 @@ export const DaysGrid = styled.div`
   grid-auto-rows: 1fr;
   gap: 4px;
   flex: 1;
-  max-height: 160px;
+  max-height: 180px;
+  position: relative;
+
   @media (min-width: 640px) {
     gap: 4px;
   }
@@ -215,7 +216,7 @@ export const DayCell = styled.div<DayCellProps>`
   position: relative;
   flex-direction: column;
   padding: 8px;
-  height: 160px;
+  height: 180px;
   overflow-y: scroll;
 
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
@@ -268,13 +269,13 @@ export const DayCell = styled.div<DayCellProps>`
 export const DayButton = styled.button`
   display: flex;
   width: 100%;
+  border: 1px solid ${({ theme }) => theme.colors.border.default};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
   align-items: flex-start;
   justify-content: flex-end;
   text-align: left;
   background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
+  margin-bottom: 5px;
   font-size: inherit;
   font-weight: inherit;
   color: inherit;
@@ -308,9 +309,8 @@ export const TaskItem = styled.div<TaskItemProps>`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   border-radius: 0;
   box-shadow: ${({ theme }) => theme.shadows.xl};
-  white-space: nowrap;
-  //text-overflow: ellipsis;
   cursor: pointer;
+  word-wrap: break-word;
   transition: background ${({ theme }) => theme.transitions.fast};
 
   ${({ $isMutable, theme }) =>
