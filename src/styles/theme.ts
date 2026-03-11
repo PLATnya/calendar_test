@@ -2,6 +2,7 @@ export const theme = {
   colors: {
     // Primary palette - minimalistic neutral tones
     background: '#fafafa',
+    backgroundGradient: 'linear-gradient(180deg, #fbe8fc 0%, #fcf0d957 50%, #f0f9ff 100%)',
     surface: '#00000015',
     surfaceHover: '#0000003a',
     // Text colors

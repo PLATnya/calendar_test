@@ -17,7 +17,7 @@ export const GlobalStyles = createGlobalStyle`
 
   body {
     font-family: ${({ theme }) => theme.typography.fontFamily.sans};
-    background: linear-gradient(180deg, #fbe8fc 0%, #fcf0d957 50%, #f0f9ff 100%);
+    background: ${({ theme }) => theme.colors.backgroundGradient};
     color: ${({ theme }) => theme.colors.text.primary};
     line-height: ${({ theme }) => theme.typography.lineHeight.normal};
     min-height: 100vh;
