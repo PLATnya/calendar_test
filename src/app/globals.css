@@ -1,12 +1,4 @@
 /* 
-  Base reset styles - Tailwind removed in favor of Styled-Components
-  All styling is now handled by src/styles/CalendarStyles.ts
+  Base styles - Styling is handled by src/styles/GlobalStyles.ts (styled-components)
+  This file is kept as the Next.js entry point for global CSS imports.
 */
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}

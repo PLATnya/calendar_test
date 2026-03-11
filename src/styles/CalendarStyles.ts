@@ -1,12 +1,7 @@
 'use client';
 
-import styled, { css, keyframes } from 'styled-components';
-
-// Animations
-const spin = keyframes`
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-`;
+import styled, { css } from 'styled-components';
+import { spin } from './animations';
 
 // Main Container
 export const PageWrapper = styled.div`

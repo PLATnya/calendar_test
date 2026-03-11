@@ -1,7 +1,6 @@
 'use client';
 
 import { createGlobalStyle } from 'styled-components';
-import { theme } from './theme';
 
 export const GlobalStyles = createGlobalStyle`
   *, *::before, *::after {
@@ -17,10 +16,10 @@ export const GlobalStyles = createGlobalStyle`
   }
 
   body {
-    font-family: ${theme.typography.fontFamily.sans};
+    font-family: ${({ theme }) => theme.typography.fontFamily.sans};
     background: linear-gradient(180deg, #fbe8fc 0%, #fcf0d957 50%, #f0f9ff 100%);
-    color: ${theme.colors.text.primary};
-    line-height: ${theme.typography.lineHeight.normal};
+    color: ${({ theme }) => theme.colors.text.primary};
+    line-height: ${({ theme }) => theme.typography.lineHeight.normal};
     min-height: 100vh;
   }
 
@@ -52,11 +51,11 @@ export const GlobalStyles = createGlobalStyle`
   }
 
   ::-webkit-scrollbar-thumb {
-    background: ${theme.colors.border.default};
-    border-radius: ${theme.borderRadius.full};
+    background: ${({ theme }) => theme.colors.border.default};
+    border-radius: ${({ theme }) => theme.borderRadius.full};
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: ${theme.colors.border.hover};
+    background: ${({ theme }) => theme.colors.border.hover};
   }
 `;

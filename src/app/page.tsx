@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { useCalendarLayout } from './calendar-layout-hook';
-import { useTasks } from './tasks-hook';
+import { useCalendarLayout } from '@/hooks/use-calendar-layout';
+import { useTasks } from '@/hooks/use-tasks';
 import type { Task } from '@/core/calendar-layout';
 import {
   PageWrapper,
