@@ -142,13 +142,7 @@ export default function Home() {
     setNewTaskDescription('');
   };
 
-  const handleCancelAddTask = () => {
-    setAddingTask(null);
-    setNewTaskTitle('');
-    setNewTaskDescription('');
-  };
-
-  const handleStartEditTask = (task: Task, day: number, e: React.MouseEvent) => {
+  const handleStartEditTask = (task: Task, day: number) => {
     // Don't allow editing immutable tasks
     if (task.mutable === false) return;
 
@@ -190,10 +184,6 @@ export default function Home() {
       }
       setEditingTask(null);
     }
-  };
-
-  const handleCancelEditTask = () => {
-    setEditingTask(null);
   };
 
   const handleDeleteTask = () => {
@@ -359,7 +349,7 @@ export default function Home() {
                             onDragEnd={handleDragEnd}
                             onDragOver={(e) => handleDragOverTask(e, cell.day)}
                             onDrop={(e) => handleDrop(e, cell.day, index)}
-                            onClick={(e) => handleStartEditTask(task, cell.day, e)}
+                            onClick={() => handleStartEditTask(task, cell.day)}
                             $isMutable={isMutable}
                             $isDragging={draggedTask?.id === task.id}
                             title={`${task.title}${task.description ? `\n${task.description}` : ''}`}
@@ -425,7 +415,7 @@ export default function Home() {
                 </TaskForm>
               </TaskOverlay>
             )}
-            
+
             {/* Add task overlay */}
             {addingTask && (
               <TaskOverlay
@@ -466,9 +456,6 @@ export default function Home() {
               </TaskOverlay>
             )}
           </DaysGrid>
-
-          
-
         </CalendarSection>
 
         {selectedDay !== null && (

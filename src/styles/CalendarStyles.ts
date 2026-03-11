@@ -294,8 +294,6 @@ export const TasksList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
-
-
 `;
 
 // Task Item

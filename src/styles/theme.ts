@@ -11,7 +11,7 @@ export const theme = {
       muted: '#71717a',
       inverse: '#ffffff',
     },
-    
+
     // Border colors
     border: {
       default: '#e4e4e7',
@@ -19,14 +19,14 @@ export const theme = {
       focus: '#a1a1aa',
       active: '#71717a',
     },
-    
+
     // Accent colors - refined sky blue
     accent: {
       primary: '#0ea5e9',
       light: '#e0f2fe',
       hover: '#0284c7',
     },
-    
+
     task: {
       background: '#fff5d9c2',
       hover: '#ffffff63',
@@ -39,23 +39,23 @@ export const theme = {
       border: '#fb923c',
       text: '#9a3412',
     },
-    
+
     holiday: {
       background: '#fce7f3',
       hover: '#f472b53f',
       text: '#9d174d',
     },
-    
+
     // State colors
     success: '#22c55e',
     danger: '#ef4444',
     warning: '#f59e0b',
-    
+
     // Overlay colors
     overlay: 'rgba(0, 0, 0, 0.35)',
     overlayLight: 'rgba(0, 0, 0, 0.2)',
   },
-  
+
   spacing: {
     xs: '4px',
     sm: '8px',
@@ -64,7 +64,7 @@ export const theme = {
     xl: '24px',
     xxl: '32px',
   },
-  
+
   borderRadius: {
     sm: '6px',
     md: '8px',
@@ -72,14 +72,14 @@ export const theme = {
     xl: '16px',
     full: '9999px',
   },
-  
+
   shadows: {
     sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
     md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
     lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)',
     xl: '0 25px 30px -8px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.17)',
   },
-  
+
   typography: {
     fontFamily: {
       sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
@@ -106,13 +106,13 @@ export const theme = {
       relaxed: '1.75',
     },
   },
-  
+
   transitions: {
     fast: '150ms ease',
     normal: '200ms ease',
     slow: '300ms ease',
   },
-  
+
   layout: {
     container: {
       maxWidth: '1400px',

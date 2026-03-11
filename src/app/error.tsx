@@ -99,9 +99,7 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
       <Card>
         <IconCircle>⚠️</IconCircle>
         <Title>Something went wrong</Title>
-        <Message>
-          {error.message || 'An unexpected error occurred. Please try again.'}
-        </Message>
+        <Message>{error.message || 'An unexpected error occurred. Please try again.'}</Message>
         {error.digest && <Digest>Error ID: {error.digest}</Digest>}
         <RetryButton onClick={reset}>Try again</RetryButton>
       </Card>
