@@ -10,7 +10,12 @@ const currentYear = now.getFullYear();
 // Fetch Ukraine public holidays for a given year and create immutable tasks
 const fetchHolidayTasks = async (year: number): Promise<Task[]> => {
   try {
-    const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/ua`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/ua`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
     if (!response.ok) {
       console.error('Failed to fetch holidays:', response.status);
       return [];
